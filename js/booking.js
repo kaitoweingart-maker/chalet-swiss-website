@@ -1207,9 +1207,17 @@ function showPaymentStep(confirmationId, paymentLink, email, bookingData) {
   var payBtn = document.getElementById('payNowBtn');
   if (payBtn) {
     payBtn.addEventListener('click', function () {
-      var popup = window.open(paymentLink, 'chaletswiss_payment', 'width=900,height=700,scrollbars=yes,resizable=yes');
+      // Validate payment link is from trusted Adyen domain
+      try {
+        var linkUrl = new URL(paymentLink);
+        if (linkUrl.protocol !== 'https:' || (!linkUrl.hostname.endsWith('.adyen.com') && !linkUrl.hostname.endsWith('.apaleo.com'))) {
+          console.error('Untrusted payment URL blocked:', linkUrl.hostname);
+          return;
+        }
+      } catch (e) { console.error('Invalid payment URL'); return; }
+      var popup = window.open(paymentLink, 'chaletswiss_payment', 'width=900,height=700,scrollbars=yes,resizable=yes,noopener');
       if (!popup || popup.closed) {
-        window.open(paymentLink, '_blank');
+        window.open(paymentLink, '_blank', 'noopener,noreferrer');
         return;
       }
       payBtn.disabled = true;

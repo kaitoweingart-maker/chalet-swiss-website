@@ -28,6 +28,11 @@
   <link rel="preload" href="./assets/images/exterior/Interlaken_Dengler_Matthias_384.jpg" as="image" fetchpriority="high">
   <link rel="preload" href="./css/style.css" as="style">
 
+  <!-- Security headers -->
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta http-equiv="X-Frame-Options" content="DENY">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+
   <!-- DNS prefetch for API -->
   <link rel="dns-prefetch" href="https://amanthos-website-api.onrender.com">
   <link rel="preconnect" href="https://amanthos-website-api.onrender.com" crossorigin>
@@ -703,7 +708,7 @@
   </div>
 
   <!-- Scripts -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" integrity="sha384-CI3ELBVUz9XQO+97x6nwMDPosPR5XvsxW2ua7N1Xeygeh1IxtgqtCkGfQY9WWdHu" crossorigin="anonymous" defer></script>
   <script src="./js/hero3d.js" defer></script>
   <script src="./js/i18n.js" defer></script>
   <script src="./js/app.js" defer></script>
