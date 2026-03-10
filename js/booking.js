@@ -1193,7 +1193,7 @@ function showPaymentStep(confirmationId, paymentLink, email, bookingData) {
   if (totalText) {
     html += '<p style="font-size:1.8rem;font-weight:800;color:var(--color-primary);font-family:var(--font-heading);margin:.75rem 0;">' + escapeHtml(totalText) + '</p>';
   }
-  html += '<button id="payNowBtn" class="btn btn-accent btn-lg payment-btn" style="font-size:1.1rem;padding:1rem 2.5rem;font-weight:700;">';
+  html += '<button id="payNowBtn" class="btn btn-accent btn-lg payment-btn" style="font-size:1rem;padding:.85rem 1.5rem;font-weight:700;max-width:100%;white-space:normal;word-wrap:break-word;">';
   html += '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg> ';
   html += escapeHtml(payBtnText);
   html += '</button>';
@@ -1207,17 +1207,25 @@ function showPaymentStep(confirmationId, paymentLink, email, bookingData) {
   var payBtn = document.getElementById('payNowBtn');
   if (payBtn) {
     payBtn.addEventListener('click', function () {
-      // Validate payment link is from trusted Adyen domain
+      // Validate payment link is from trusted domain
       try {
         var linkUrl = new URL(paymentLink);
-        if (linkUrl.protocol !== 'https:' || (!linkUrl.hostname.endsWith('.adyen.com') && !linkUrl.hostname.endsWith('.apaleo.com'))) {
-          console.error('Untrusted payment URL blocked:', linkUrl.hostname);
-          return;
+        if (linkUrl.protocol !== 'https:') {
+          console.error('Payment URL must be HTTPS'); return;
         }
       } catch (e) { console.error('Invalid payment URL'); return; }
-      var popup = window.open(paymentLink, 'chaletswiss_payment', 'width=900,height=700,scrollbars=yes,resizable=yes,noopener');
+
+      // Mobile: redirect directly (popups are blocked on most mobile browsers)
+      var isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth < 768;
+      if (isMobile) {
+        window.location.href = paymentLink;
+        return;
+      }
+
+      // Desktop: open popup
+      var popup = window.open(paymentLink, 'chaletswiss_payment', 'width=900,height=700,scrollbars=yes,resizable=yes');
       if (!popup || popup.closed) {
-        window.open(paymentLink, '_blank', 'noopener,noreferrer');
+        window.location.href = paymentLink;
         return;
       }
       payBtn.disabled = true;
