@@ -598,6 +598,30 @@ h3 { font-size: clamp(1.2rem, 3vw, 1.6rem); }
   transform: translateX(-50%);
 }
 
+/* ---------- Hero Trust Pills ---------- */
+.hero-trust-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  color: rgba(255,255,255,.75);
+  font-size: .78rem;
+  font-weight: 400;
+  letter-spacing: .04em;
+}
+
+.hero-trust-row {
+  margin-bottom: .75rem;
+}
+
+.hero-trust-pill {
+  white-space: nowrap;
+}
+
+.hero-trust-dot {
+  opacity: .5;
+}
+
 /* ---------- Hero Light Theme (WebGL bas-relief active) ---------- */
 body.hero-light .nav-logo .logo-white { display: none; }
 body.hero-light .nav-logo .logo-color { display: block; }
@@ -2293,6 +2317,11 @@ body.hero-light .nav.scrolled .lang-toggle { color: rgba(44,44,44,.85); }
   .reveal-wrapper { border-radius: 16px 16px 0 0; }
   .hero h1 { font-size: 2rem; }
   .hero-line { width: 30px; }
+
+  .hero-trust-row {
+    font-size: .7rem;
+    gap: .4rem;
+  }
 
   .hero-booking {
     flex-direction: column;
