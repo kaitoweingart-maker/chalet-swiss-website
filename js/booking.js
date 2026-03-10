@@ -14,6 +14,16 @@ var PROMO_CODES = {
 };
 var appliedPromo = null;
 
+// Upsell add-ons configuration
+var UPSELL_ITEMS = [
+  { id: 'wine_red', icon: '\uD83C\uDF77', nameKey: 'booking.upsell_wine_red', descKey: 'booking.upsell_wine_red_desc', nameFallback: 'Rotwein (Flasche)', descFallback: 'Ausgewählter Schweizer Rotwein', price: 35 },
+  { id: 'wine_white', icon: '\uD83E\uDD42', nameKey: 'booking.upsell_wine_white', descKey: 'booking.upsell_wine_white_desc', nameFallback: 'Weisswein (Flasche)', descFallback: 'Frischer Schweizer Weisswein', price: 35 },
+  { id: 'beer', icon: '\uD83C\uDF7A', nameKey: 'booking.upsell_beer', descKey: 'booking.upsell_beer_desc', nameFallback: 'Bier Auswahl (6er)', descFallback: 'Lokale & Schweizer Bierspezialitäten', price: 29 },
+  { id: 'roses_champagne', icon: '\uD83C\uDF39', nameKey: 'booking.upsell_roses_champagne', descKey: 'booking.upsell_roses_champagne_desc', nameFallback: 'Rosen & Champagner', descFallback: 'Rosenstrauss mit Champagner — bereit im Zimmer', price: 89 },
+  { id: 'fondue', icon: '\uD83E\uDDC0', nameKey: 'booking.upsell_fondue', descKey: 'booking.upsell_fondue_desc', nameFallback: 'Fondue für 2', descFallback: 'Käsefondue am Abend Ihrer Ankunft', price: 49.90 },
+];
+var selectedUpsells = {};
+
 var searchBtn = document.getElementById('bookingSearchBtn');
 var bookingSection = document.getElementById('booking');
 var offersGrid = document.getElementById('offersGrid');
@@ -754,13 +764,77 @@ function selectOffer(index) {
   if (bookingStatus) bookingStatus.style.display = 'none';
 
   appliedPromo = null;
+  selectedUpsells = {};
   var promoMsg = document.getElementById('promoMessage');
   if (promoMsg) promoMsg.textContent = '';
   var promoInp = document.getElementById('promoCodeInput');
   if (promoInp) promoInp.value = '';
   updatePriceDisplay();
+  renderUpsells();
 
   guestForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+// Upsell rendering
+function renderUpsells() {
+  var grid = document.getElementById('upsellGrid');
+  if (!grid) return;
+  var html = '';
+  UPSELL_ITEMS.forEach(function (item) {
+    var name = window.t ? window.t(item.nameKey) : item.nameFallback;
+    var desc = window.t ? window.t(item.descKey) : item.descFallback;
+    if (name === item.nameKey) name = item.nameFallback;
+    if (desc === item.descKey) desc = item.descFallback;
+    html += '<div class="upsell-card" data-upsell-id="' + item.id + '" tabindex="0" role="checkbox" aria-checked="false">';
+    html += '<span class="upsell-card-icon">' + item.icon + '</span>';
+    html += '<div class="upsell-card-info">';
+    html += '<div class="upsell-card-name">' + escapeHtml(name) + '</div>';
+    html += '<div class="upsell-card-desc">' + escapeHtml(desc) + '</div>';
+    html += '</div>';
+    html += '<span class="upsell-card-price">CHF ' + item.price.toFixed(0) + '</span>';
+    html += '<div class="upsell-card-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>';
+    html += '</div>';
+  });
+  grid.innerHTML = html;
+
+  grid.querySelectorAll('.upsell-card').forEach(function (card) {
+    card.addEventListener('click', function () {
+      var id = this.dataset.upsellId;
+      if (selectedUpsells[id]) {
+        delete selectedUpsells[id];
+        this.classList.remove('selected');
+        this.setAttribute('aria-checked', 'false');
+      } else {
+        var item = UPSELL_ITEMS.find(function (u) { return u.id === id; });
+        if (item) {
+          selectedUpsells[id] = item;
+          this.classList.add('selected');
+          this.setAttribute('aria-checked', 'true');
+        }
+      }
+      updatePriceDisplay();
+    });
+    card.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); this.click(); }
+    });
+  });
+}
+
+function getUpsellTotal() {
+  var total = 0;
+  Object.keys(selectedUpsells).forEach(function (id) {
+    total += selectedUpsells[id].price;
+  });
+  return total;
+}
+
+function getUpsellComment() {
+  var items = [];
+  Object.keys(selectedUpsells).forEach(function (id) {
+    var item = selectedUpsells[id];
+    items.push(item.nameFallback + ' (CHF ' + item.price.toFixed(2) + ')');
+  });
+  return items.length > 0 ? ' | Add-ons: ' + items.join(', ') : '';
 }
 
 // Promo code functions
@@ -793,10 +867,23 @@ function getDiscountedTotal() {
 function updatePriceDisplay() {
   var display = document.getElementById('promoDiscountDisplay');
   if (!display || !selectedOffer || !selectedOffer.totalGrossAmount) return;
-  if (appliedPromo) {
+  var upsellTotal = getUpsellTotal();
+  var html = '';
+  if (appliedPromo || upsellTotal > 0) {
     var orig = selectedOffer.totalGrossAmount;
     var disc = getDiscountedTotal();
-    display.innerHTML = '<span style="text-decoration:line-through;color:var(--color-text-muted);font-size:.9rem;">' + orig.currency + ' ' + orig.amount.toFixed(2) + '</span> <span style="color:#059669;font-weight:700;font-size:1.1rem;">' + disc.currency + ' ' + disc.amount.toFixed(2) + '</span>';
+    if (appliedPromo) {
+      html += '<span style="text-decoration:line-through;color:var(--color-text-muted);font-size:.9rem;">' + orig.currency + ' ' + orig.amount.toFixed(2) + '</span> ';
+      html += '<span style="color:#059669;font-weight:700;font-size:1.1rem;">' + disc.currency + ' ' + disc.amount.toFixed(2) + '</span>';
+    }
+    if (upsellTotal > 0) {
+      var roomTotal = appliedPromo ? disc.amount : orig.amount;
+      html += '<div style="font-size:.82rem;color:var(--color-text-muted);margin-top:.4rem;">';
+      html += '+ CHF ' + upsellTotal.toFixed(2) + ' Add-ons';
+      html += ' = <strong style="color:var(--color-primary);">CHF ' + (roomTotal + upsellTotal).toFixed(2) + '</strong>';
+      html += '</div>';
+    }
+    display.innerHTML = html;
     display.style.display = 'block';
   } else {
     display.style.display = 'none';
@@ -826,7 +913,13 @@ if (confirmBtn) {
     confirmBtn.textContent = window.t ? window.t('booking.processing') : 'Wird verarbeitet...';
 
     var discountedTotal = getDiscountedTotal();
-    var finalTotal = discountedTotal ? discountedTotal.amount : (selectedOffer.totalGrossAmount ? selectedOffer.totalGrossAmount.amount : 0);
+    var roomTotal = discountedTotal ? discountedTotal.amount : (selectedOffer.totalGrossAmount ? selectedOffer.totalGrossAmount.amount : 0);
+    var upsellTotal = getUpsellTotal();
+    var finalTotal = roomTotal + upsellTotal;
+
+    var commentParts = ['Booked via chaletswiss.ch'];
+    if (appliedPromo) commentParts.push('Promo: ' + appliedPromo.code + ' (' + appliedPromo.label + ' off)');
+    commentParts.push(getUpsellComment());
 
     var payload = {
       propertyId: PROPERTY_ID,
@@ -842,7 +935,7 @@ if (confirmBtn) {
         email: email,
         phone: phone,
       },
-      comment: appliedPromo ? 'Booked via chaletswiss.ch | Promo: ' + appliedPromo.code + ' (' + appliedPromo.label + ' off)' : 'Booked via chaletswiss.ch',
+      comment: commentParts.join(' | ').replace(/\| $/,'').trim(),
     };
 
     fetch(API_BASE + '/api/bookings', {
@@ -995,6 +1088,7 @@ function resetBookingFlow() {
   selectedOffer = null;
   currentOffers = [];
   appliedPromo = null;
+  selectedUpsells = {};
   if (guestForm) guestForm.style.display = 'none';
   if (offersGrid) offersGrid.innerHTML = '';
   if (bookingSection) bookingSection.style.display = 'none';
