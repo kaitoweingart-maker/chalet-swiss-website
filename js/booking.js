@@ -702,16 +702,16 @@ function renderOffers(data) {
   if (nonRefundable.length > 0) {
     html += '<h4 class="offers-category-title">' + (window.t ? window.t('booking.best_price_label') : 'Bester Preis') + '</h4>';
     html += '<div class="offers-grid-wrap">';
-    nonRefundable.forEach(function (offer, i) {
-      html += renderOfferCard(offer, 'non-refundable', i, true);
+    nonRefundable.forEach(function (offer) {
+      html += renderOfferCard(offer, 'non-refundable', currentOffers.indexOf(offer), true);
     });
     html += '</div>';
   }
   if (refundable.length > 0) {
     html += '<h4 class="offers-category-title">' + (window.t ? window.t('booking.flexible_label') : 'Flexibel') + '</h4>';
     html += '<div class="offers-grid-wrap">';
-    refundable.forEach(function (offer, i) {
-      html += renderOfferCard(offer, 'refundable', nonRefundable.length + i, false);
+    refundable.forEach(function (offer) {
+      html += renderOfferCard(offer, 'refundable', currentOffers.indexOf(offer), false);
     });
     html += '</div>';
   }
@@ -766,8 +766,8 @@ function selectOffer(index) {
   selectedOffer = currentOffers[index];
   if (!selectedOffer || !guestForm) return;
 
-  offersGrid.querySelectorAll('.offer-card').forEach(function (card, i) {
-    card.classList.toggle('selected', i === index);
+  offersGrid.querySelectorAll('.offer-card').forEach(function (card) {
+    card.classList.toggle('selected', parseInt(card.getAttribute('data-index')) === index);
   });
 
   guestForm.style.display = 'block';
