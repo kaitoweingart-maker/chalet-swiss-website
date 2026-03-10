@@ -903,18 +903,21 @@ function updatePriceDisplay() {
   if (appliedPromo || upsellCents > 0) {
     var orig = selectedOffer.totalGrossAmount;
     var origCents = Math.round(orig.amount * 100);
-    var disc = getDiscountedTotal();
-    if (appliedPromo && disc) {
-      var discCents = Math.round(disc.amount * 100);
-      html += '<span style="text-decoration:line-through;color:var(--color-text-muted);font-size:.9rem;">' + orig.currency + ' ' + (origCents / 100).toFixed(2) + '</span> ';
-      html += '<span style="color:#059669;font-weight:700;font-size:1.1rem;">' + disc.currency + ' ' + (discCents / 100).toFixed(2) + '</span>';
+    var fullOrigCents = origCents + upsellCents;
+    if (appliedPromo) {
+      var discCents = Math.round(fullOrigCents * (1 - appliedPromo.discount));
+      html += '<span style="text-decoration:line-through;color:var(--color-text-muted);font-size:.9rem;">' + orig.currency + ' ' + (fullOrigCents / 100).toFixed(2) + '</span> ';
+      html += '<span style="color:#059669;font-weight:700;font-size:1.1rem;">' + orig.currency + ' ' + (discCents / 100).toFixed(2) + '</span>';
     }
-    if (upsellCents > 0) {
-      var roomCents = (appliedPromo && disc) ? Math.round(disc.amount * 100) : origCents;
-      var combinedCents = roomCents + upsellCents;
+    if (upsellCents > 0 && !appliedPromo) {
+      var combinedCents = origCents + upsellCents;
       html += '<div style="font-size:.82rem;color:var(--color-text-muted);margin-top:.4rem;">';
       html += '+ CHF ' + (upsellCents / 100).toFixed(2) + ' Add-ons';
       html += ' = <strong style="color:var(--color-primary);">CHF ' + (combinedCents / 100).toFixed(2) + '</strong>';
+      html += '</div>';
+    } else if (upsellCents > 0 && appliedPromo) {
+      html += '<div style="font-size:.82rem;color:var(--color-text-muted);margin-top:.4rem;">';
+      html += (window.t ? window.t('booking.includes_addons') : 'Inkl. Add-ons im Wert von') + ' CHF ' + (upsellCents / 100).toFixed(2);
       html += '</div>';
     }
     display.innerHTML = html;
@@ -946,8 +949,7 @@ if (confirmBtn) {
     confirmBtn.disabled = true;
     confirmBtn.textContent = window.t ? window.t('booking.processing') : 'Wird verarbeitet...';
 
-    var discountedTotal = getDiscountedTotal();
-    var roomCents = discountedTotal ? Math.round(discountedTotal.amount * 100) : (selectedOffer.totalGrossAmount ? Math.round(selectedOffer.totalGrossAmount.amount * 100) : 0);
+    var roomCents = selectedOffer.totalGrossAmount ? Math.round(selectedOffer.totalGrossAmount.amount * 100) : 0;
 
     var commentParts = ['Booked via chaletswiss.ch'];
     if (appliedPromo) commentParts.push('Promo: ' + appliedPromo.code + ' (' + appliedPromo.label + ' off)');
@@ -964,6 +966,8 @@ if (confirmBtn) {
     });
 
     var upsellCents = Math.round(getUpsellTotal() * 100);
+    var fullCents = roomCents + upsellCents;
+    if (appliedPromo) fullCents = Math.round(fullCents * (1 - appliedPromo.discount));
 
     var payload = {
       propertyId: PROPERTY_ID,
@@ -971,7 +975,7 @@ if (confirmBtn) {
       arrival: searchParams.arrival,
       departure: searchParams.departure,
       adults: parseInt(searchParams.adults),
-      totalAmount: (roomCents + upsellCents) / 100,
+      totalAmount: fullCents / 100,
       upsells: upsellsList,
       currency: selectedOffer.totalGrossAmount ? selectedOffer.totalGrossAmount.currency : 'CHF',
       booker: {
@@ -1166,10 +1170,10 @@ function showPaymentStep(confirmationId, paymentLink, email, bookingData) {
 
   var totalText = '';
   if (selectedOffer && selectedOffer.totalGrossAmount) {
-    var discTotal = getDiscountedTotal();
-    var roomCents = discTotal ? Math.round(discTotal.amount * 100) : Math.round(selectedOffer.totalGrossAmount.amount * 100);
+    var roomCents = Math.round(selectedOffer.totalGrossAmount.amount * 100);
     var upsellCents = Math.round(getUpsellTotal() * 100);
     var fullCents = roomCents + upsellCents;
+    if (appliedPromo) fullCents = Math.round(fullCents * (1 - appliedPromo.discount));
     totalText = (selectedOffer.totalGrossAmount.currency || 'CHF') + ' ' + (fullCents / 100).toFixed(2);
   }
 
@@ -1227,10 +1231,10 @@ function showPaymentRetry(confirmationId, email, bookingData) {
 
   var totalText = '';
   if (selectedOffer && selectedOffer.totalGrossAmount) {
-    var discTotal = getDiscountedTotal();
-    var roomCents = discTotal ? Math.round(discTotal.amount * 100) : Math.round(selectedOffer.totalGrossAmount.amount * 100);
+    var roomCents = Math.round(selectedOffer.totalGrossAmount.amount * 100);
     var upsellCents = Math.round(getUpsellTotal() * 100);
     var fullCents = roomCents + upsellCents;
+    if (appliedPromo) fullCents = Math.round(fullCents * (1 - appliedPromo.discount));
     totalText = (selectedOffer.totalGrossAmount.currency || 'CHF') + ' ' + (fullCents / 100).toFixed(2);
   }
 
@@ -1269,10 +1273,11 @@ function showPaymentRetry(confirmationId, email, bookingData) {
         email: email,
         totalAmount: (function () {
           if (!selectedOffer || !selectedOffer.totalGrossAmount) return 0;
-          var disc = getDiscountedTotal();
-          var roomCents = disc ? Math.round(disc.amount * 100) : Math.round(selectedOffer.totalGrossAmount.amount * 100);
+          var roomCents = Math.round(selectedOffer.totalGrossAmount.amount * 100);
           var upsellCents = Math.round(getUpsellTotal() * 100);
-          return (roomCents + upsellCents) / 100;
+          var fullCents = roomCents + upsellCents;
+          if (appliedPromo) fullCents = Math.round(fullCents * (1 - appliedPromo.discount));
+          return fullCents / 100;
         })(),
         currency: selectedOffer && selectedOffer.totalGrossAmount ? selectedOffer.totalGrossAmount.currency : 'CHF',
       };
