@@ -24,10 +24,10 @@ var UPSELL_ITEMS = [
   { id: 'fondue_2', icon: '\uD83E\uDDC0', nameKey: 'booking.upsell_fondue_2', descKey: 'booking.upsell_fondue_2_desc', nameFallback: 'Fondue für 2', descFallback: 'Käsefondue für zwei Personen', price: 49.90 },
   { id: 'fondue_2_wine', icon: '\uD83C\uDF77', nameKey: 'booking.upsell_fondue_2_wine', descKey: 'booking.upsell_fondue_2_wine_desc', nameFallback: 'Fondue für 2 mit Wein', descFallback: 'Käsefondue für zwei inkl. Flasche Wein', price: 99.90 },
   { id: 'raclette_1', icon: '\uD83E\uDDC0', nameKey: 'booking.upsell_raclette_1', descKey: 'booking.upsell_raclette_1_desc', nameFallback: 'Raclette für 1', descFallback: 'Original Walliser Raclette für eine Person', price: 23.90 },
-  { id: 'towels', icon: '\uD83D\uDEC1', nameKey: 'booking.upsell_towels', descKey: 'booking.upsell_towels_desc', nameFallback: 'Extra Handtücher', descFallback: 'Pro Nacht / Stück', price: 5 },
-  { id: 'blankets', icon: '\uD83D\uDECF\uFE0F', nameKey: 'booking.upsell_blankets', descKey: 'booking.upsell_blankets_desc', nameFallback: 'Extra Decke & Kissen', descFallback: 'Pro Nacht / Stück', price: 10 },
-  { id: 'locker', icon: '\uD83D\uDD12', nameKey: 'booking.upsell_locker', descKey: 'booking.upsell_locker_desc', nameFallback: 'Schliessfach', descFallback: 'Pro Tag', price: 5 },
-  { id: 'parking', icon: '\uD83C\uDD7F\uFE0F', nameKey: 'booking.upsell_parking', descKey: 'booking.upsell_parking_desc', nameFallback: 'Parkplatz', descFallback: 'Pro Tag', price: 5 },
+  { id: 'towels', icon: '\uD83D\uDEC1', nameKey: 'booking.upsell_towels', descKey: 'booking.upsell_towels_desc', nameFallback: 'Extra Handtücher', descFallback: 'Pro Nacht / Stück', price: 5, perDay: true },
+  { id: 'blankets', icon: '\uD83D\uDECF\uFE0F', nameKey: 'booking.upsell_blankets', descKey: 'booking.upsell_blankets_desc', nameFallback: 'Extra Decke & Kissen', descFallback: 'Pro Nacht / Stück', price: 10, perDay: true },
+  { id: 'locker', icon: '\uD83D\uDD12', nameKey: 'booking.upsell_locker', descKey: 'booking.upsell_locker_desc', nameFallback: 'Schliessfach', descFallback: 'Pro Tag', price: 5, perDay: true },
+  { id: 'parking', icon: '\uD83C\uDD7F\uFE0F', nameKey: 'booking.upsell_parking', descKey: 'booking.upsell_parking_desc', nameFallback: 'Parkplatz', descFallback: 'Pro Tag', price: 5, perDay: true },
 ];
 var selectedUpsells = {};
 
@@ -798,7 +798,9 @@ function renderUpsells() {
     html += '<div class="upsell-card-name">' + escapeHtml(name) + '</div>';
     html += '<div class="upsell-card-desc">' + escapeHtml(desc) + '</div>';
     html += '</div>';
-    html += '<span class="upsell-card-price">CHF ' + item.price.toFixed(2) + '</span>';
+    var priceLabel = 'CHF ' + item.price.toFixed(2);
+    if (item.perDay) priceLabel += ' / ' + (window.t ? window.t('booking.per_day') : 'Tag');
+    html += '<span class="upsell-card-price">' + priceLabel + '</span>';
     html += '<div class="upsell-card-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>';
     html += '</div>';
   });
@@ -827,19 +829,34 @@ function renderUpsells() {
   });
 }
 
+function getBookingNights() {
+  if (!searchParams.arrival || !searchParams.departure) return 1;
+  var d1 = new Date(searchParams.arrival + 'T00:00:00');
+  var d2 = new Date(searchParams.departure + 'T00:00:00');
+  var nights = Math.round((d2 - d1) / 86400000);
+  return nights > 0 ? nights : 1;
+}
+
 function getUpsellTotal() {
   var total = 0;
+  var nights = getBookingNights();
   Object.keys(selectedUpsells).forEach(function (id) {
-    total += selectedUpsells[id].price;
+    var item = selectedUpsells[id];
+    total += item.perDay ? item.price * nights : item.price;
   });
   return total;
 }
 
 function getUpsellComment() {
   var items = [];
+  var nights = getBookingNights();
   Object.keys(selectedUpsells).forEach(function (id) {
     var item = selectedUpsells[id];
-    items.push(item.nameFallback + ' (CHF ' + item.price.toFixed(2) + ')');
+    if (item.perDay && nights > 1) {
+      items.push(item.nameFallback + ' (CHF ' + item.price.toFixed(2) + ' x ' + nights + ' = CHF ' + (item.price * nights).toFixed(2) + ')');
+    } else {
+      items.push(item.nameFallback + ' (CHF ' + item.price.toFixed(2) + ')');
+    }
   });
   return items.length > 0 ? ' | Add-ons: ' + items.join(', ') : '';
 }
@@ -921,12 +938,19 @@ if (confirmBtn) {
 
     var discountedTotal = getDiscountedTotal();
     var roomTotal = discountedTotal ? discountedTotal.amount : (selectedOffer.totalGrossAmount ? selectedOffer.totalGrossAmount.amount : 0);
-    var upsellTotal = getUpsellTotal();
-    var finalTotal = roomTotal + upsellTotal;
 
     var commentParts = ['Booked via chaletswiss.ch'];
     if (appliedPromo) commentParts.push('Promo: ' + appliedPromo.code + ' (' + appliedPromo.label + ' off)');
     commentParts.push(getUpsellComment());
+
+    // Build structured upsell list for folio charges
+    var upsellsList = [];
+    var bookingNights = getBookingNights();
+    Object.keys(selectedUpsells).forEach(function (id) {
+      var item = selectedUpsells[id];
+      var totalPrice = item.perDay ? item.price * bookingNights : item.price;
+      upsellsList.push({ id: item.id, name: item.nameFallback, price: totalPrice, unitPrice: item.price, perDay: !!item.perDay, nights: item.perDay ? bookingNights : 1 });
+    });
 
     var payload = {
       propertyId: PROPERTY_ID,
@@ -934,7 +958,8 @@ if (confirmBtn) {
       arrival: searchParams.arrival,
       departure: searchParams.departure,
       adults: parseInt(searchParams.adults),
-      totalAmount: finalTotal,
+      totalAmount: roomTotal + getUpsellTotal(),
+      upsells: upsellsList,
       currency: selectedOffer.totalGrossAmount ? selectedOffer.totalGrossAmount.currency : 'CHF',
       booker: {
         firstName: firstName,
@@ -1128,7 +1153,10 @@ function showPaymentStep(confirmationId, paymentLink, email, bookingData) {
 
   var totalText = '';
   if (selectedOffer && selectedOffer.totalGrossAmount) {
-    totalText = selectedOffer.totalGrossAmount.currency + ' ' + selectedOffer.totalGrossAmount.amount.toFixed(2);
+    var discTotal = getDiscountedTotal();
+    var roomAmt = discTotal ? discTotal.amount : selectedOffer.totalGrossAmount.amount;
+    var fullTotal = roomAmt + getUpsellTotal();
+    totalText = (selectedOffer.totalGrossAmount.currency || 'CHF') + ' ' + fullTotal.toFixed(2);
   }
 
   var html = '';
@@ -1185,7 +1213,10 @@ function showPaymentRetry(confirmationId, email, bookingData) {
 
   var totalText = '';
   if (selectedOffer && selectedOffer.totalGrossAmount) {
-    totalText = selectedOffer.totalGrossAmount.currency + ' ' + selectedOffer.totalGrossAmount.amount.toFixed(2);
+    var discTotal = getDiscountedTotal();
+    var roomAmt = discTotal ? discTotal.amount : selectedOffer.totalGrossAmount.amount;
+    var fullTotal = roomAmt + getUpsellTotal();
+    totalText = (selectedOffer.totalGrossAmount.currency || 'CHF') + ' ' + fullTotal.toFixed(2);
   }
 
   var html = '';
@@ -1221,7 +1252,12 @@ function showPaymentRetry(confirmationId, email, bookingData) {
         reservationId: bookingData.reservationId || '',
         propertyId: PROPERTY_ID,
         email: email,
-        totalAmount: selectedOffer && selectedOffer.totalGrossAmount ? selectedOffer.totalGrossAmount.amount : 0,
+        totalAmount: (function () {
+          if (!selectedOffer || !selectedOffer.totalGrossAmount) return 0;
+          var disc = getDiscountedTotal();
+          var room = disc ? disc.amount : selectedOffer.totalGrossAmount.amount;
+          return room + getUpsellTotal();
+        })(),
         currency: selectedOffer && selectedOffer.totalGrossAmount ? selectedOffer.totalGrossAmount.currency : 'CHF',
       };
 

@@ -185,6 +185,7 @@
     "room": "Zimmer",
     "total": "total",
     "per_night": "/ Nacht",
+    "per_day": "Tag",
     "only_left": "Nur noch {n} verfügbar!",
     "available": "{n} verfügbar",
     "free_cancellation": "Kostenlose Stornierung",

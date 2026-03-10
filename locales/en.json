@@ -185,6 +185,7 @@
     "room": "Room",
     "total": "total",
     "per_night": "/ night",
+    "per_day": "day",
     "only_left": "Only {n} left!",
     "available": "{n} available",
     "free_cancellation": "Free cancellation",
