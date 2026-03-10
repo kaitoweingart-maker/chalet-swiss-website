@@ -946,7 +946,20 @@ if (confirmBtn) {
     }
 
     confirmBtn.disabled = true;
-    confirmBtn.textContent = window.t ? window.t('booking.processing') : 'Wird verarbeitet...';
+    confirmBtn.innerHTML = '<span class="spinner-inline"></span> ' + (window.t ? window.t('booking.processing') : 'Wird verarbeitet...');
+    // Show progress updates
+    var progressMsgs = [
+      window.t ? window.t('booking.processing') : 'Reservierung wird erstellt...',
+      'Zahlungslink wird generiert...',
+      'Fast fertig...'
+    ];
+    var progressIdx = 0;
+    var progressTimer = setInterval(function () {
+      progressIdx++;
+      if (progressIdx < progressMsgs.length) {
+        confirmBtn.innerHTML = '<span class="spinner-inline"></span> ' + progressMsgs[progressIdx];
+      }
+    }, 5000);
 
     var roomCents = selectedOffer.totalGrossAmount ? Math.round(selectedOffer.totalGrossAmount.amount * 100) : 0;
 
@@ -994,6 +1007,7 @@ if (confirmBtn) {
     })
     .then(function (res) { return res.json(); })
     .then(function (data) {
+      clearInterval(progressTimer);
       confirmBtn.disabled = false;
       confirmBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> ' + (window.t ? window.t('booking.confirm_reservation') : 'Reservierung bestätigen');
 
@@ -1015,6 +1029,7 @@ if (confirmBtn) {
       }
     })
     .catch(function (err) {
+      clearInterval(progressTimer);
       confirmBtn.disabled = false;
       confirmBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> ' + (window.t ? window.t('booking.confirm_reservation') : 'Reservierung bestätigen');
       showStatus('error', window.t ? window.t('booking.error_connection') : 'Verbindungsfehler. Bitte versuchen Sie es erneut.');
