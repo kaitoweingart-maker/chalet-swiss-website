@@ -1,0 +1,1145 @@
+(function () {
+'use strict';
+
+var API_BASE = window.CHALETSWISS_API_BASE || 'https://amanthos-website-api.onrender.com';
+var PROPERTY_ID = 'HCSI';
+
+var selectedOffer = null;
+var currentOffers = [];
+var searchParams = {};
+
+// Promo code configuration
+var PROMO_CODES = {
+  'DM23102901TEST100BBPR': { discount: 1.0, label: '100%' },
+};
+var appliedPromo = null;
+
+var searchBtn = document.getElementById('bookingSearchBtn');
+var bookingSection = document.getElementById('booking');
+var offersGrid = document.getElementById('offersGrid');
+var offersLoading = document.getElementById('offersLoading');
+var guestForm = document.getElementById('guestForm');
+var confirmBtn = document.getElementById('confirmBookingBtn');
+var cancelBtn = document.getElementById('cancelBookingBtn');
+var bookingStatus = document.getElementById('bookingStatus');
+
+// ========== CUSTOM CALENDAR ==========
+var checkinEl = document.getElementById('bb-checkin');
+var checkoutEl = document.getElementById('bb-checkout');
+var nightsBadge = document.getElementById('nightsBadge');
+var daterangeWrap = document.getElementById('daterangeWrap');
+var daterangeLabel = document.getElementById('daterangeLabel');
+
+function pad(n) { return n < 10 ? '0' + n : '' + n; }
+function toISO(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+function epoch(d) { return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime(); }
+
+var MONTHS_FULL = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+var MONTHS_SHORT = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+var DAYS_HEAD = ['Mo','Di','Mi','Do','Fr','Sa','So'];
+var DAYS_NAME = ['So','Mo','Di','Mi','Do','Fr','Sa'];
+
+function fmtDate(d) {
+  return DAYS_NAME[d.getDay()] + ', ' + d.getDate() + '. ' + MONTHS_SHORT[d.getMonth()];
+}
+
+var cal = {
+  checkin: null, checkout: null,
+  selecting: null,
+  month: new Date().getMonth(),
+  year: new Date().getFullYear(),
+  hoverDate: null,
+  el: null
+};
+
+function buildCalendar() {
+  var div = document.createElement('div');
+  div.id = 'calDropdown';
+  div.className = 'cal-dropdown';
+  div.innerHTML =
+    '<div class="cal-picks">' +
+      '<button class="cal-pick" data-pick="tonight">Heute Nacht</button>' +
+      '<button class="cal-pick" data-pick="weekend">Dieses WE</button>' +
+      '<button class="cal-pick" data-pick="next-weekend">Nächstes WE</button>' +
+      '<button class="cal-pick" data-pick="week">1 Woche</button>' +
+    '</div>' +
+    '<div class="cal-nav">' +
+      '<button class="cal-nav-btn cal-prev" aria-label="Vorheriger Monat">\u2039</button>' +
+      '<span class="cal-title"></span>' +
+      '<button class="cal-nav-btn cal-next" aria-label="Nächster Monat">\u203A</button>' +
+    '</div>' +
+    '<div class="cal-head">' + DAYS_HEAD.map(function (d) { return '<span>' + d + '</span>'; }).join('') + '</div>' +
+    '<div class="cal-body"></div>' +
+    '<div class="cal-foot"><span class="cal-info"></span></div>';
+  document.body.appendChild(div);
+  cal.el = div;
+
+  div.querySelector('.cal-prev').addEventListener('click', function (e) {
+    e.stopPropagation();
+    cal.month--;
+    if (cal.month < 0) { cal.month = 11; cal.year--; }
+    renderCal();
+  });
+  div.querySelector('.cal-next').addEventListener('click', function (e) {
+    e.stopPropagation();
+    cal.month++;
+    if (cal.month > 11) { cal.month = 0; cal.year++; }
+    renderCal();
+  });
+
+  div.querySelectorAll('.cal-pick').forEach(function (btn) {
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      quickPick(this.dataset.pick);
+    });
+  });
+
+  div.querySelector('.cal-body').addEventListener('click', function (e) {
+    var btn = e.target.closest('button.cal-day');
+    if (!btn || btn.classList.contains('disabled') || btn.classList.contains('empty')) return;
+    e.preventDefault();
+    e.stopPropagation();
+    var d = parseInt(btn.dataset.day);
+    pickDate(new Date(cal.year, cal.month, d, 12, 0, 0));
+  });
+
+  div.querySelector('.cal-body').addEventListener('mouseover', function (e) {
+    var btn = e.target.closest('button.cal-day');
+    if (!btn || btn.classList.contains('disabled') || btn.classList.contains('empty')) return;
+    if (cal.selecting !== 'checkout') return;
+    var d = parseInt(btn.dataset.day);
+    var hDate = new Date(cal.year, cal.month, d, 12, 0, 0);
+    if (cal.checkin && epoch(hDate) <= epoch(cal.checkin)) return;
+    if (cal.hoverDate && epoch(cal.hoverDate) === epoch(hDate)) return;
+    cal.hoverDate = hDate;
+    updateRangeHighlight();
+  });
+  div.querySelector('.cal-body').addEventListener('mouseleave', function () {
+    if (cal.hoverDate) {
+      cal.hoverDate = null;
+      updateRangeHighlight();
+    }
+  });
+
+  document.addEventListener('click', function (e) {
+    if (!cal.el || !cal.el.classList.contains('open')) return;
+    if (cal.el.contains(e.target)) return;
+    if (daterangeWrap && (e.target === daterangeWrap || daterangeWrap.contains(e.target))) return;
+    closeCal();
+  });
+
+  window.addEventListener('scroll', function () {
+    if (cal.el && cal.el.classList.contains('open') && cal.selecting) positionCal(cal.selecting);
+  }, { passive: true });
+  window.addEventListener('resize', function () {
+    if (cal.el && cal.el.classList.contains('open') && cal.selecting) positionCal(cal.selecting);
+  });
+}
+
+function positionCal(mode) {
+  if (!cal.el) return;
+  var wrap = daterangeWrap;
+  if (!wrap) return;
+  var rect = wrap.getBoundingClientRect();
+  var calW = 320;
+  var calH = cal.el.offsetHeight || 400;
+  // Center under the dates field
+  var left = rect.left + (rect.width / 2) - (calW / 2);
+  var top = rect.bottom + 10;
+  // Keep within viewport
+  if (left + calW > window.innerWidth - 16) left = window.innerWidth - calW - 16;
+  if (left < 16) left = 16;
+  if (top + calH > window.innerHeight - 16) top = rect.top - calH - 10;
+  cal.el.style.left = left + 'px';
+  cal.el.style.top = top + 'px';
+}
+
+function openCal(mode) {
+  if (!cal.el) buildCalendar();
+  cal.selecting = mode;
+  var ref = mode === 'checkin' ? cal.checkin : (cal.checkout || cal.checkin);
+  if (ref) { cal.month = ref.getMonth(); cal.year = ref.getFullYear(); }
+  renderCal();
+  positionCal(mode);
+  cal.el.classList.add('open');
+}
+
+function closeCal() {
+  if (cal.el) cal.el.classList.remove('open');
+  cal.hoverDate = null;
+}
+
+function pickDate(date) {
+  var today = new Date(); today.setHours(0, 0, 0, 0);
+  if (date < today) return;
+
+  if (cal.selecting === 'checkin') {
+    // Set check-in, clear checkout if it's before the new checkin
+    cal.checkin = date;
+    if (cal.checkout && epoch(cal.checkout) <= epoch(date)) cal.checkout = null;
+    cal.selecting = 'checkout';
+    syncInputs();
+    renderCal();
+  } else {
+    // Checkout mode
+    if (!cal.checkin || epoch(date) <= epoch(cal.checkin)) {
+      // Clicked on or before checkin → treat as new checkin
+      cal.checkin = date;
+      cal.checkout = null;
+      cal.selecting = 'checkout';
+      syncInputs();
+      renderCal();
+    } else {
+      // Valid checkout date → set it and close
+      cal.checkout = date;
+      syncInputs();
+      closeCal();
+    }
+  }
+}
+
+function quickPick(type) {
+  var today = new Date(); today.setHours(12, 0, 0, 0);
+  var dow = today.getDay();
+  if (type === 'tonight') {
+    cal.checkin = new Date(today);
+    cal.checkout = new Date(today.getTime() + 86400000);
+  } else if (type === 'weekend') {
+    var d2f = (5 - dow + 7) % 7;
+    if (d2f === 0 && dow === 5) d2f = 0; else if (d2f === 0) d2f = 7;
+    var fri = new Date(today); fri.setDate(today.getDate() + d2f);
+    cal.checkin = fri;
+    cal.checkout = new Date(fri.getTime() + 2 * 86400000);
+  } else if (type === 'next-weekend') {
+    var d2f = (5 - dow + 7) % 7; if (d2f <= 0) d2f += 7; d2f += 7;
+    var fri = new Date(today); fri.setDate(today.getDate() + d2f);
+    cal.checkin = fri;
+    cal.checkout = new Date(fri.getTime() + 2 * 86400000);
+  } else if (type === 'week') {
+    var d2f = (5 - dow + 7) % 7; if (d2f < 2) d2f += 7;
+    var fri = new Date(today); fri.setDate(today.getDate() + d2f);
+    cal.checkin = fri;
+    cal.checkout = new Date(fri.getTime() + 7 * 86400000);
+  }
+  syncInputs();
+  closeCal();
+}
+
+function renderCal() {
+  if (!cal.el) return;
+  cal.el.querySelector('.cal-title').textContent = MONTHS_FULL[cal.month] + ' ' + cal.year;
+  cal.el.querySelector('.cal-info').textContent = cal.selecting === 'checkin' ? 'Anreisedatum wählen' : 'Abreisedatum wählen';
+
+  var first = new Date(cal.year, cal.month, 1);
+  var daysInMonth = new Date(cal.year, cal.month + 1, 0).getDate();
+  var startDow = (first.getDay() + 6) % 7;
+  var today = new Date(); today.setHours(0, 0, 0, 0);
+
+  var html = '';
+  for (var i = 0; i < startDow; i++) html += '<span class="cal-day empty"></span>';
+
+  for (var d = 1; d <= daysInMonth; d++) {
+    var date = new Date(cal.year, cal.month, d, 12, 0, 0);
+    var t = epoch(date);
+    var cls = 'cal-day';
+    // Only truly disable past dates — everything else is clickable
+    if (date < today) {
+      cls += ' disabled';
+    }
+    if (d === today.getDate() && cal.month === today.getMonth() && cal.year === today.getFullYear()) cls += ' today';
+    if (cal.checkin && t === epoch(cal.checkin)) cls += ' selected';
+    if (cal.checkout && t === epoch(cal.checkout)) cls += ' selected';
+    var rangeEnd = cal.checkout || cal.hoverDate;
+    if (cal.checkin && rangeEnd && t > epoch(cal.checkin) && t < epoch(rangeEnd)) cls += ' in-range';
+    html += '<button type="button" class="' + cls + '" data-day="' + d + '">' + d + '</button>';
+  }
+  cal.el.querySelector('.cal-body').innerHTML = html;
+
+  var prevBtn = cal.el.querySelector('.cal-prev');
+  var now = new Date();
+  prevBtn.style.opacity = (cal.year === now.getFullYear() && cal.month === now.getMonth()) ? '.2' : '';
+  prevBtn.style.pointerEvents = (cal.year === now.getFullYear() && cal.month === now.getMonth()) ? 'none' : '';
+}
+
+function updateRangeHighlight() {
+  if (!cal.el) return;
+  var days = cal.el.querySelectorAll('.cal-day[data-day]');
+  var rangeEnd = cal.checkout || cal.hoverDate;
+  for (var i = 0; i < days.length; i++) {
+    var d = parseInt(days[i].dataset.day);
+    var t = epoch(new Date(cal.year, cal.month, d, 12, 0, 0));
+    if (cal.checkin && rangeEnd && t > epoch(cal.checkin) && t < epoch(rangeEnd)) {
+      days[i].classList.add('in-range');
+    } else {
+      days[i].classList.remove('in-range');
+    }
+  }
+}
+
+function syncInputs() {
+  if (checkinEl) {
+    checkinEl.dataset.date = cal.checkin ? toISO(cal.checkin) : '';
+  }
+  if (checkoutEl) {
+    checkoutEl.dataset.date = cal.checkout ? toISO(cal.checkout) : '';
+  }
+  if (daterangeLabel) {
+    if (cal.checkin && cal.checkout) {
+      daterangeLabel.textContent = fmtDate(cal.checkin) + '  \u2192  ' + fmtDate(cal.checkout);
+      daterangeLabel.classList.add('has-value');
+    } else if (cal.checkin) {
+      daterangeLabel.textContent = fmtDate(cal.checkin) + '  \u2192  ...';
+      daterangeLabel.classList.add('has-value');
+    } else {
+      daterangeLabel.textContent = window.t ? window.t('booking_bar.set_dates') : 'Reisedaten festlegen';
+      daterangeLabel.classList.remove('has-value');
+    }
+  }
+  updateNightsBadge();
+}
+
+function updateNightsBadge() {
+  if (!nightsBadge) return;
+  if (cal.checkin && cal.checkout) {
+    var nights = Math.round((epoch(cal.checkout) - epoch(cal.checkin)) / 86400000);
+    if (nights > 0) {
+      nightsBadge.textContent = nights + (nights === 1 ? ' Nacht' : ' Nächte');
+      nightsBadge.classList.add('visible');
+      return;
+    }
+  }
+  nightsBadge.classList.remove('visible');
+}
+
+// Attach date range click handler
+if (daterangeWrap) {
+  daterangeWrap.addEventListener('click', function (e) {
+    e.stopPropagation();
+    if (guestsDropdown && guestsDropdown.classList.contains('open')) guestsDropdown.classList.remove('open');
+    if (cal.el && cal.el.classList.contains('open')) {
+      closeCal();
+      return;
+    }
+    // If only checkin is set, continue with checkout; otherwise start fresh with checkin
+    var mode = (cal.checkin && !cal.checkout) ? 'checkout' : 'checkin';
+    // If both dates are already set, reset and start fresh
+    if (cal.checkin && cal.checkout) {
+      cal.checkin = null;
+      cal.checkout = null;
+      syncInputs();
+      mode = 'checkin';
+    }
+    openCal(mode);
+  });
+}
+
+// No smart defaults — start clean like chaletswiss.ch
+buildCalendar();
+
+// ========== GUESTS DROPDOWN (Adults + Children) ==========
+var guestsWrap = document.getElementById('guestsWrap');
+var guestsLabel = document.getElementById('guestsLabel');
+var guestInput = document.getElementById('bb-guests');
+var childInput = document.getElementById('bb-children');
+var guestsDropdown = null;
+
+function buildGuestsDropdown() {
+  var div = document.createElement('div');
+  div.id = 'guestsDropdown';
+  div.className = 'guests-dropdown';
+  div.innerHTML =
+    '<div class="guests-row">' +
+      '<span class="guests-row-label" data-i18n="booking_bar.adults">Erwachsene</span>' +
+      '<div class="guests-stepper">' +
+        '<button type="button" class="guests-step" id="adultMinus" aria-label="Weniger">\u2212</button>' +
+        '<span class="guests-count" id="adultCount">1</span>' +
+        '<button type="button" class="guests-step" id="adultPlus" aria-label="Mehr">+</button>' +
+      '</div>' +
+    '</div>' +
+    '<div class="guests-row">' +
+      '<span class="guests-row-label" data-i18n="booking_bar.children">Kinder</span>' +
+      '<div class="guests-stepper">' +
+        '<button type="button" class="guests-step" id="childMinus" aria-label="Weniger">\u2212</button>' +
+        '<span class="guests-count" id="childCount">0</span>' +
+        '<button type="button" class="guests-step" id="childPlus" aria-label="Mehr">+</button>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(div);
+  guestsDropdown = div;
+
+  // Apply translations to dropdown labels if loaded
+  div.querySelectorAll('[data-i18n]').forEach(function (el) {
+    var key = el.getAttribute('data-i18n');
+    var val = window.t ? window.t(key) : null;
+    if (val && val !== key) el.textContent = val;
+  });
+
+  // Update on language change
+  document.addEventListener('languageChanged', function () {
+    if (!guestsDropdown) return;
+    guestsDropdown.querySelectorAll('[data-i18n]').forEach(function (el) {
+      var key = el.getAttribute('data-i18n');
+      var val = window.t ? window.t(key) : null;
+      if (val && val !== key) el.textContent = val;
+    });
+    updateGuestsLabel();
+  });
+
+  div.querySelector('#adultMinus').addEventListener('click', function (e) { e.stopPropagation(); updateGuestCount('adults', -1); });
+  div.querySelector('#adultPlus').addEventListener('click', function (e) { e.stopPropagation(); updateGuestCount('adults', 1); });
+  div.querySelector('#childMinus').addEventListener('click', function (e) { e.stopPropagation(); updateGuestCount('children', -1); });
+  div.querySelector('#childPlus').addEventListener('click', function (e) { e.stopPropagation(); updateGuestCount('children', 1); });
+
+  document.addEventListener('click', function (e) {
+    if (!guestsDropdown || !guestsDropdown.classList.contains('open')) return;
+    if (guestsDropdown.contains(e.target)) return;
+    if (guestsWrap && (e.target === guestsWrap || guestsWrap.contains(e.target))) return;
+    closeGuestsDropdown();
+  });
+
+  window.addEventListener('scroll', function () {
+    if (guestsDropdown && guestsDropdown.classList.contains('open')) positionGuestsDropdown();
+  }, { passive: true });
+  window.addEventListener('resize', function () {
+    if (guestsDropdown && guestsDropdown.classList.contains('open')) positionGuestsDropdown();
+  });
+}
+
+function updateGuestCount(type, dir) {
+  if (type === 'adults') {
+    var val = parseInt(guestInput.value) || 1;
+    var newVal = Math.max(1, Math.min(6, val + dir));
+    guestInput.value = newVal;
+    var el = document.getElementById('adultCount');
+    if (el) el.textContent = newVal;
+  } else {
+    var val = parseInt(childInput.value) || 0;
+    var newVal = Math.max(0, Math.min(4, val + dir));
+    childInput.value = newVal;
+    var el = document.getElementById('childCount');
+    if (el) el.textContent = newVal;
+  }
+  updateGuestsLabel();
+}
+
+function updateGuestsLabel() {
+  if (!guestsLabel) return;
+  var adults = parseInt(guestInput.value) || 1;
+  var children = parseInt(childInput.value) || 0;
+  var label = adults + ' ' + (adults === 1 ? (window.t ? window.t('booking.adult_singular') : 'Erwachsener') : (window.t ? window.t('booking.adults_plural') : 'Erwachsene'));
+  if (children > 0) {
+    label += ', ' + children + ' ' + (children === 1 ? (window.t ? window.t('booking.child_singular') : 'Kind') : (window.t ? window.t('booking.children_plural') : 'Kinder'));
+  }
+  guestsLabel.textContent = label;
+  guestsLabel.classList.add('has-value');
+}
+
+function positionGuestsDropdown() {
+  if (!guestsDropdown || !guestsWrap) return;
+  var rect = guestsWrap.getBoundingClientRect();
+  var ddW = 260;
+  var left = rect.left + (rect.width / 2) - (ddW / 2);
+  var top = rect.bottom + 10;
+  if (left + ddW > window.innerWidth - 16) left = window.innerWidth - ddW - 16;
+  if (left < 16) left = 16;
+  if (top + guestsDropdown.offsetHeight > window.innerHeight - 16) top = rect.top - guestsDropdown.offsetHeight - 10;
+  guestsDropdown.style.left = left + 'px';
+  guestsDropdown.style.top = top + 'px';
+}
+
+function openGuestsDropdown() {
+  if (!guestsDropdown) buildGuestsDropdown();
+  positionGuestsDropdown();
+  guestsDropdown.classList.add('open');
+}
+
+function closeGuestsDropdown() {
+  if (guestsDropdown) guestsDropdown.classList.remove('open');
+}
+
+if (guestsWrap) {
+  guestsWrap.addEventListener('click', function (e) {
+    e.stopPropagation();
+    if (cal.el && cal.el.classList.contains('open')) closeCal();
+    if (guestsDropdown && guestsDropdown.classList.contains('open')) {
+      closeGuestsDropdown();
+    } else {
+      openGuestsDropdown();
+    }
+  });
+}
+
+
+function showValidation(el, msg) {
+  if (!el) return;
+  var existing = el.parentElement.querySelector('.validation-msg');
+  if (existing) existing.remove();
+  var span = document.createElement('span');
+  span.className = 'validation-msg';
+  span.textContent = msg;
+  span.style.cssText = 'color:var(--color-error);font-size:.78rem;font-weight:500;margin-top:.25rem;display:block;';
+  span.setAttribute('role', 'alert');
+  el.parentElement.appendChild(span);
+  el.style.borderColor = 'var(--color-error)';
+  el.focus();
+  el.addEventListener('input', function handler() {
+    el.style.borderColor = '';
+    var m = el.parentElement.querySelector('.validation-msg');
+    if (m) m.remove();
+    el.removeEventListener('input', handler);
+  });
+}
+
+// Wake backend on idle
+function wakeBackend() {
+  fetch(API_BASE + '/health', { mode: 'cors' }).catch(function () {});
+}
+if ('requestIdleCallback' in window) {
+  requestIdleCallback(wakeBackend);
+} else {
+  setTimeout(wakeBackend, 3000);
+}
+
+// Inline validation on blur
+['guest-first', 'guest-last', 'guest-email'].forEach(function (id) {
+  var field = document.getElementById(id);
+  if (!field) return;
+  field.addEventListener('blur', function () {
+    var val = this.value.trim();
+    var existing = this.parentElement.querySelector('.validation-msg');
+    if (existing) existing.remove();
+    this.style.borderColor = '';
+    if (!val) {
+      showValidation(this, window.t ? window.t('booking.validation_required') : 'Dieses Feld ist erforderlich.');
+    } else if (id === 'guest-email' && !isValidEmail(val)) {
+      showValidation(this, window.t ? window.t('booking.validation_valid_email') : 'Bitte geben Sie eine gültige E-Mail-Adresse ein.');
+    } else {
+      this.style.borderColor = 'var(--color-success)';
+    }
+  });
+});
+
+// Promo code
+var applyPromoBtn = document.getElementById('applyPromoBtn');
+if (applyPromoBtn) {
+  applyPromoBtn.addEventListener('click', applyPromoCode);
+}
+var promoInput = document.getElementById('promoCodeInput');
+if (promoInput) {
+  promoInput.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); applyPromoCode(); }
+  });
+}
+
+// Search button
+if (searchBtn) {
+  searchBtn.addEventListener('click', function () {
+    var checkin = document.getElementById('bb-checkin');
+    var checkout = document.getElementById('bb-checkout');
+    var guests = document.getElementById('bb-guests');
+    var childrenEl = document.getElementById('bb-children');
+    var checkinVal = checkin ? (checkin.dataset.date || '') : '';
+    var checkoutVal = checkout ? (checkout.dataset.date || '') : '';
+    var guestsVal = guests ? guests.value : '2';
+    var childrenVal = childrenEl ? childrenEl.value : '0';
+
+    if (!checkinVal || !checkoutVal) {
+      // Open calendar to let user pick dates
+      if (daterangeWrap) daterangeWrap.click();
+      return;
+    }
+    if (checkoutVal <= checkinVal) {
+      cal.checkin = null; cal.checkout = null; syncInputs();
+      if (daterangeWrap) daterangeWrap.click();
+      return;
+    }
+
+    searchParams = {
+      propertyId: PROPERTY_ID,
+      arrival: checkinVal,
+      departure: checkoutVal,
+      adults: guestsVal,
+      children: childrenVal,
+    };
+    fetchOffers();
+  });
+}
+
+function showSkeletonCards() {
+  if (!offersGrid) return;
+  var html = '';
+  for (var s = 0; s < 3; s++) {
+    html += '<div class="skeleton-card" aria-hidden="true">';
+    html += '<div class="skeleton skeleton-line w-40"></div>';
+    html += '<div class="skeleton skeleton-line h-md w-60"></div>';
+    html += '<div class="skeleton skeleton-line w-80"></div>';
+    html += '<div class="skeleton skeleton-line h-lg w-40"></div>';
+    html += '<div class="skeleton skeleton-line w-60"></div>';
+    html += '<div class="skeleton skeleton-line h-btn w-100"></div>';
+    html += '</div>';
+  }
+  offersGrid.innerHTML = html;
+}
+
+function fetchOffers() {
+  if (!bookingSection || !offersGrid || !offersLoading) return;
+  bookingSection.style.display = 'block';
+  offersGrid.innerHTML = '';
+  if (guestForm) guestForm.style.display = 'none';
+  if (bookingStatus) bookingStatus.style.display = 'none';
+  selectedOffer = null;
+  showSkeletonCards();
+
+  setTimeout(function () {
+    bookingSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 100);
+
+  var query = '';
+  var keys = Object.keys(searchParams);
+  for (var i = 0; i < keys.length; i++) {
+    if (i > 0) query += '&';
+    query += encodeURIComponent(keys[i]) + '=' + encodeURIComponent(searchParams[keys[i]]);
+  }
+
+  fetch(API_BASE + '/api/offers?' + query, { mode: 'cors' })
+  .then(function (res) {
+    if (!res.ok) {
+      return res.json().then(function (errData) {
+        throw new Error(errData.error || 'Failed to fetch offers (HTTP ' + res.status + ')');
+      }).catch(function () {
+        throw new Error('Failed to fetch offers (HTTP ' + res.status + ')');
+      });
+    }
+    return res.json();
+  })
+  .then(function (data) {
+    offersLoading.style.display = 'none';
+    currentOffers = data.offers || [];
+    if (currentOffers.length === 0) {
+      offersGrid.innerHTML = '<div class="no-offers"><p>' + (window.t ? window.t('booking.no_offers') : 'Keine Verfügbarkeit für die gewählten Daten. Bitte versuchen Sie andere Daten.') + '</p></div>';
+      return;
+    }
+    renderOffers(data);
+  })
+  .catch(function (err) {
+    offersLoading.style.display = 'none';
+    var msg = window.t ? window.t('booking.unable_to_check') : 'Verfügbarkeit kann momentan nicht geprüft werden.';
+    if (err.message && err.message.indexOf('Failed to fetch') !== -1) {
+      msg = window.t ? window.t('booking.server_waking') : 'Unser Buchungsserver startet gerade (~30 Sekunden beim ersten Laden). Bitte klicken Sie gleich nochmal auf "Suchen".';
+    }
+
+    var noOffersDiv = document.createElement('div');
+    noOffersDiv.className = 'no-offers';
+    noOffersDiv.setAttribute('role', 'alert');
+
+    var msgP = document.createElement('p');
+    msgP.textContent = msg;
+    msgP.style.cssText = 'font-size:.95rem;color:var(--color-text);margin-bottom:.5rem;font-weight:500;';
+    noOffersDiv.appendChild(msgP);
+
+    var helpP = document.createElement('p');
+    helpP.style.cssText = 'font-size:.82rem;color:var(--color-text-muted);margin-bottom:1rem;';
+    helpP.textContent = window.t ? window.t('booking.error_help') : 'Bitte versuchen Sie es erneut oder kontaktieren Sie uns unter info@chaletswiss.ch';
+    noOffersDiv.appendChild(helpP);
+
+    var retryBtn = document.createElement('button');
+    retryBtn.className = 'btn btn-accent';
+    retryBtn.style.marginTop = '.5rem';
+    retryBtn.innerHTML = (window.t ? window.t('booking.try_again') : 'Erneut versuchen');
+    retryBtn.addEventListener('click', function () {
+      var sb = document.getElementById('bookingSearchBtn');
+      if (sb) sb.click();
+    });
+    noOffersDiv.appendChild(retryBtn);
+
+    offersGrid.innerHTML = '';
+    offersGrid.appendChild(noOffersDiv);
+    console.error('Offers error:', err);
+  });
+}
+
+function renderOffers(data) {
+  var html = '';
+  var nights = data.nights || 1;
+
+  var nightLabel = nights === 1 ? (window.t ? window.t('booking.night') : 'Nacht') : (window.t ? window.t('booking.nights') : 'Nächte');
+  var adultLabel = data.adults == 1 ? (window.t ? window.t('booking.adult_singular') : 'Erwachsener') : (window.t ? window.t('booking.adults_plural') : 'Erwachsene');
+  var childrenCount = parseInt(searchParams.children) || 0;
+  var guestSummary = data.adults + ' ' + adultLabel;
+  if (childrenCount > 0) {
+    var childLabel = childrenCount === 1 ? (window.t ? window.t('booking.child_singular') : 'Kind') : (window.t ? window.t('booking.children_plural') : 'Kinder');
+    guestSummary += ', ' + childrenCount + ' ' + childLabel;
+  }
+
+  html += '<div class="offers-summary">';
+  html += '<div class="offers-summary-dates">' + escapeHtml(data.arrival) + ' &mdash; ' + escapeHtml(data.departure) + '</div>';
+  html += '<div class="offers-summary-detail">' + nights + ' ' + nightLabel + ' &middot; ' + guestSummary + '</div>';
+  html += '</div>';
+
+  var refundable = currentOffers.filter(function (o) { return o.category === 'Refundable'; });
+  var nonRefundable = currentOffers.filter(function (o) { return o.category === 'Non-Refundable'; });
+
+  if (nonRefundable.length > 0) {
+    html += '<h4 class="offers-category-title">' + (window.t ? window.t('booking.best_price_label') : 'Bester Preis') + '</h4>';
+    nonRefundable.forEach(function (offer, i) {
+      html += renderOfferCard(offer, 'non-refundable', i, true);
+    });
+  }
+  if (refundable.length > 0) {
+    html += '<h4 class="offers-category-title">' + (window.t ? window.t('booking.flexible_label') : 'Flexibel') + '</h4>';
+    refundable.forEach(function (offer, i) {
+      html += renderOfferCard(offer, 'refundable', nonRefundable.length + i, false);
+    });
+  }
+
+  offersGrid.innerHTML = html;
+  offersGrid.querySelectorAll('.offer-card').forEach(function (card) {
+    card.addEventListener('click', function () {
+      var idx = parseInt(this.getAttribute('data-index'));
+      selectOffer(idx);
+    });
+    card.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        var idx = parseInt(this.getAttribute('data-index'));
+        selectOffer(idx);
+      }
+    });
+  });
+}
+
+function renderOfferCard(offer, categoryClass, index, isBestPrice) {
+  var total = offer.totalGrossAmount || {};
+  var perNight = offer.averagePerNight || {};
+  var currency = 'CHF';
+  var totalAmount = total.amount ? total.amount.toFixed(0) : '\u2014';
+  var perNightAmount = perNight.amount ? perNight.amount.toFixed(0) : '\u2014';
+
+  var html = '<div class="offer-card' + (isBestPrice ? ' best-price' : '') + '" data-index="' + index + '" tabindex="0" role="button" aria-label="' + escapeHtml(offer.unitGroupName || '') + '">';
+  html += '<div class="offer-card-top">';
+  html += '<div class="offer-unit">' + escapeHtml(offer.unitGroupName || (window.t ? window.t('booking.room') : 'Zimmer')) + '</div>';
+  html += '<span class="offer-category ' + categoryClass + '">' + (categoryClass === 'refundable' ? (window.t ? window.t('booking.flexible') : 'Flexibel') : (window.t ? window.t('booking.best_price_tag') : 'Bester Preis')) + '</span>';
+  html += '</div>';
+  html += '<div class="offer-rate-name">' + escapeHtml(offer.ratePlanName || '') + '</div>';
+  html += '<div class="offer-pricing">';
+  html += '<div class="offer-price">CHF ' + perNightAmount + ' <small>' + (window.t ? window.t('booking.per_night') : '/ Nacht') + '</small></div>';
+  html += '<div class="offer-total">CHF ' + totalAmount + ' ' + (window.t ? window.t('booking.total') : 'total') + '</div>';
+  html += '</div>';
+
+  html += '<div class="offer-trust">';
+  html += '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> ';
+  html += (window.t ? window.t('booking.best_rate_guaranteed') : 'Bestpreis-Garantie');
+  html += '</div>';
+  html += '<div class="offer-select-btn">' + (window.t ? window.t('booking.select') : 'Auswählen') + '</div>';
+  html += '</div>';
+  return html;
+}
+
+function selectOffer(index) {
+  selectedOffer = currentOffers[index];
+  if (!selectedOffer || !guestForm) return;
+
+  offersGrid.querySelectorAll('.offer-card').forEach(function (card, i) {
+    card.classList.toggle('selected', i === index);
+  });
+
+  guestForm.style.display = 'block';
+  if (bookingStatus) bookingStatus.style.display = 'none';
+
+  appliedPromo = null;
+  var promoMsg = document.getElementById('promoMessage');
+  if (promoMsg) promoMsg.textContent = '';
+  var promoInp = document.getElementById('promoCodeInput');
+  if (promoInp) promoInp.value = '';
+  updatePriceDisplay();
+
+  guestForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+// Promo code functions
+function applyPromoCode() {
+  var input = document.getElementById('promoCodeInput');
+  var msg = document.getElementById('promoMessage');
+  if (!input || !msg) return;
+  var code = input.value.trim().toUpperCase();
+  if (!code) { msg.textContent = window.t ? window.t('booking.promo_enter') : 'Bitte geben Sie einen Promo-Code ein.'; msg.style.color = 'var(--color-error)'; return; }
+  if (PROMO_CODES[code]) {
+    appliedPromo = { code: code, discount: PROMO_CODES[code].discount, label: PROMO_CODES[code].label };
+    msg.textContent = (window.t ? window.t('booking.promo_applied') : 'Promo-Code eingelöst!') + ' -' + PROMO_CODES[code].label;
+    msg.style.color = '#059669';
+    updatePriceDisplay();
+  } else {
+    appliedPromo = null;
+    msg.textContent = window.t ? window.t('booking.promo_invalid') : 'Ungültiger Promo-Code.';
+    msg.style.color = 'var(--color-error)';
+    updatePriceDisplay();
+  }
+}
+
+function getDiscountedTotal() {
+  if (!selectedOffer || !selectedOffer.totalGrossAmount) return null;
+  var total = selectedOffer.totalGrossAmount.amount;
+  if (appliedPromo) { total = total * (1 - appliedPromo.discount); }
+  return { amount: Math.round(total * 100) / 100, currency: selectedOffer.totalGrossAmount.currency };
+}
+
+function updatePriceDisplay() {
+  var display = document.getElementById('promoDiscountDisplay');
+  if (!display || !selectedOffer || !selectedOffer.totalGrossAmount) return;
+  if (appliedPromo) {
+    var orig = selectedOffer.totalGrossAmount;
+    var disc = getDiscountedTotal();
+    display.innerHTML = '<span style="text-decoration:line-through;color:var(--color-text-muted);font-size:.9rem;">' + orig.currency + ' ' + orig.amount.toFixed(2) + '</span> <span style="color:#059669;font-weight:700;font-size:1.1rem;">' + disc.currency + ' ' + disc.amount.toFixed(2) + '</span>';
+    display.style.display = 'block';
+  } else {
+    display.style.display = 'none';
+    display.innerHTML = '';
+  }
+}
+
+// Confirm booking
+if (confirmBtn) {
+  confirmBtn.addEventListener('click', function () {
+    if (!selectedOffer) return;
+    var firstName = document.getElementById('guest-first').value.trim();
+    var lastName = document.getElementById('guest-last').value.trim();
+    var email = document.getElementById('guest-email').value.trim();
+    var phone = document.getElementById('guest-phone').value.trim();
+
+    if (!firstName || !lastName || !email) {
+      showStatus('error', window.t ? window.t('booking.validation_fill_required') : 'Bitte füllen Sie alle Pflichtfelder aus (Vorname, Nachname, E-Mail).');
+      return;
+    }
+    if (!isValidEmail(email)) {
+      showStatus('error', window.t ? window.t('booking.validation_valid_email') : 'Bitte geben Sie eine gültige E-Mail-Adresse ein.');
+      return;
+    }
+
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = window.t ? window.t('booking.processing') : 'Wird verarbeitet...';
+
+    var discountedTotal = getDiscountedTotal();
+    var finalTotal = discountedTotal ? discountedTotal.amount : (selectedOffer.totalGrossAmount ? selectedOffer.totalGrossAmount.amount : 0);
+
+    var payload = {
+      propertyId: PROPERTY_ID,
+      ratePlanId: selectedOffer.ratePlanId,
+      arrival: searchParams.arrival,
+      departure: searchParams.departure,
+      adults: parseInt(searchParams.adults),
+      totalAmount: finalTotal,
+      currency: selectedOffer.totalGrossAmount ? selectedOffer.totalGrossAmount.currency : 'CHF',
+      booker: {
+        firstName: firstName,
+        lastName: lastName,
+        email: email,
+        phone: phone,
+      },
+      comment: appliedPromo ? 'Booked via chaletswiss.ch | Promo: ' + appliedPromo.code + ' (' + appliedPromo.label + ' off)' : 'Booked via chaletswiss.ch',
+    };
+
+    fetch(API_BASE + '/api/bookings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      mode: 'cors',
+    })
+    .then(function (res) { return res.json(); })
+    .then(function (data) {
+      confirmBtn.disabled = false;
+      confirmBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> ' + (window.t ? window.t('booking.confirm_reservation') : 'Reservierung bestätigen');
+
+      if (data.success) {
+        guestForm.querySelector('.form-grid').style.display = 'none';
+        guestForm.querySelector('.form-actions').style.display = 'none';
+        var promoSection = guestForm.querySelector('.promo-code-section');
+        if (promoSection) promoSection.style.display = 'none';
+
+        if (data.paymentRequired === false) {
+          showFreeBookingConfirmation(data.confirmationId, email);
+        } else if (data.paymentLink) {
+          showPaymentStep(data.confirmationId, data.paymentLink, email, data);
+        } else {
+          showPaymentRetry(data.confirmationId, email, data);
+        }
+      } else {
+        showStatus('error', data.error || (window.t ? window.t('booking.error_booking_failed') : 'Buchung fehlgeschlagen. Bitte versuchen Sie es erneut oder kontaktieren Sie uns.'));
+      }
+    })
+    .catch(function (err) {
+      confirmBtn.disabled = false;
+      confirmBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> ' + (window.t ? window.t('booking.confirm_reservation') : 'Reservierung bestätigen');
+      showStatus('error', window.t ? window.t('booking.error_connection') : 'Verbindungsfehler. Bitte versuchen Sie es erneut.');
+      console.error('Booking error:', err);
+    });
+  });
+}
+
+// Cancel button
+if (cancelBtn) {
+  cancelBtn.addEventListener('click', function () {
+    if (guestForm) guestForm.style.display = 'none';
+    selectedOffer = null;
+    if (offersGrid) {
+      offersGrid.querySelectorAll('.offer-card').forEach(function (card) {
+        card.classList.remove('selected');
+      });
+    }
+  });
+}
+
+function showStatus(type, message) {
+  if (!bookingStatus) return;
+  bookingStatus.className = 'booking-status ' + type;
+  bookingStatus.textContent = message;
+  bookingStatus.style.display = 'block';
+}
+
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  var div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function getOrCreatePaymentSection() {
+  var paymentSection = document.getElementById('paymentStep');
+  if (!paymentSection) {
+    paymentSection = document.createElement('div');
+    paymentSection.id = 'paymentStep';
+    paymentSection.className = 'payment-step';
+    guestForm.appendChild(paymentSection);
+  }
+  return paymentSection;
+}
+
+function showFreeBookingConfirmation(confirmationId, email) {
+  if (bookingStatus) bookingStatus.style.display = 'none';
+  var paymentSection = getOrCreatePaymentSection();
+  var html = '';
+  html += '<div class="payment-step-success" style="border-left:4px solid #059669;background:#ECFDF5;">';
+  html += '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>';
+  html += '<div>';
+  html += '<h4 style="color:#065F46;">' + (window.t ? window.t('booking.confirmed_title') : 'Buchung bestätigt') + ' — ' + escapeHtml(confirmationId) + '</h4>';
+  html += '<p style="font-size:.82rem;color:#059669;margin-top:.25rem;">' + escapeHtml(email) + '</p>';
+  html += '</div>';
+  html += '</div>';
+  html += '<div class="payment-step-action" style="text-align:center;padding:1.5rem;">';
+  html += '<p style="font-weight:500;color:var(--color-text);margin-bottom:.75rem;">' + (window.t ? window.t('booking.promo_covers_full') : 'Ihr Promo-Code deckt den vollen Betrag. Ihre Reservierung ist bestätigt!') + '</p>';
+  html += '<p style="font-size:.85rem;color:var(--color-text-muted);">' + (window.t ? window.t('booking.confirmation_email') : 'Eine Bestätigungsmail wird an') + ' <strong>' + escapeHtml(email) + '</strong> ' + (window.t ? window.t('booking.sent') : 'gesendet.') + '</p>';
+  html += '</div>';
+  paymentSection.innerHTML = html;
+  paymentSection.style.display = 'block';
+  paymentSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function cancelUnpaidBooking(reservationId, bookingId, paymentSection) {
+  fetch(API_BASE + '/api/cancel-booking', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ reservationId: reservationId, bookingId: bookingId }),
+    mode: 'cors',
+  })
+  .then(function (res) { return res.json(); })
+  .then(function (data) {
+    if (data.cancelled) {
+      var html = '';
+      html += '<div class="payment-step-success" style="border-left:4px solid #DC2626;background:#FEF2F2;">';
+      html += '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>';
+      html += '<div>';
+      html += '<h4 style="color:#991B1B;">' + (window.t ? window.t('booking.cancelled_title') : 'Reservierung storniert') + '</h4>';
+      html += '<p style="font-size:.85rem;color:#DC2626;margin-top:.25rem;">' + (window.t ? window.t('booking.cancelled_no_payment') : 'Zahlung nicht abgeschlossen. Ihre Reservierung wurde storniert.') + '</p>';
+      html += '</div>';
+      html += '</div>';
+      html += '<div class="payment-step-action" style="text-align:center;padding:1.5rem;">';
+      html += '<p style="font-weight:500;color:var(--color-text);margin-bottom:1rem;">' + (window.t ? window.t('booking.cancelled_rebook') : 'Sie können jederzeit eine neue Reservierung vornehmen.') + '</p>';
+      html += '<button class="btn btn-accent btn-lg" id="rebookBtn">' + (window.t ? window.t('booking.search_again') : 'Erneut suchen') + '</button>';
+      html += '</div>';
+      paymentSection.innerHTML = html;
+
+      var rebookBtn = document.getElementById('rebookBtn');
+      if (rebookBtn) {
+        rebookBtn.addEventListener('click', function () {
+          resetBookingFlow();
+        });
+      }
+    } else if (data.reason === 'paid') {
+      var html = '';
+      html += '<div class="payment-step-success" style="border-left:4px solid #059669;background:#ECFDF5;">';
+      html += '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>';
+      html += '<div>';
+      html += '<h4 style="color:#065F46;">' + (window.t ? window.t('booking.payment_success') : 'Zahlung erfolgreich — Reservierung bestätigt!') + '</h4>';
+      html += '<p style="font-size:.85rem;color:#059669;margin-top:.25rem;">' + (window.t ? window.t('booking.confirmation_email_sent') : 'Eine Bestätigungsmail wurde an Sie gesendet.') + '</p>';
+      html += '</div>';
+      html += '</div>';
+      paymentSection.innerHTML = html;
+    }
+  })
+  .catch(function (err) {
+    console.error('Cancel booking error:', err);
+  });
+}
+
+function resetBookingFlow() {
+  selectedOffer = null;
+  currentOffers = [];
+  appliedPromo = null;
+  if (guestForm) guestForm.style.display = 'none';
+  if (offersGrid) offersGrid.innerHTML = '';
+  if (bookingSection) bookingSection.style.display = 'none';
+  if (bookingStatus) bookingStatus.style.display = 'none';
+  var paymentStep = document.getElementById('paymentStep');
+  if (paymentStep) paymentStep.remove();
+  if (guestForm) {
+    var formGrid = guestForm.querySelector('.form-grid');
+    if (formGrid) formGrid.style.display = '';
+    var formActions = guestForm.querySelector('.form-actions');
+    if (formActions) formActions.style.display = '';
+    var promoSec = guestForm.querySelector('.promo-code-section');
+    if (promoSec) promoSec.style.display = '';
+  }
+  var formFields = guestForm ? guestForm.querySelectorAll('input, select, textarea') : [];
+  for (var i = 0; i < formFields.length; i++) {
+    if (formFields[i].type === 'checkbox') formFields[i].checked = false;
+    else formFields[i].value = '';
+  }
+  var bb = document.getElementById('bookingBar');
+  if (bb) bb.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function showPaymentStep(confirmationId, paymentLink, email, bookingData) {
+  if (bookingStatus) bookingStatus.style.display = 'none';
+  var paymentSection = getOrCreatePaymentSection();
+  var paymentMsg = window.t ? window.t('booking.payment_instruction') : 'Die Zahlung ist erforderlich, um Ihre Reservierung zu bestätigen.';
+  var payBtnText = window.t ? window.t('booking.pay_now') : 'Jetzt bezahlen — Sichere Zahlung';
+  var reservationId = bookingData.reservationId || '';
+
+  var totalText = '';
+  if (selectedOffer && selectedOffer.totalGrossAmount) {
+    totalText = selectedOffer.totalGrossAmount.currency + ' ' + selectedOffer.totalGrossAmount.amount.toFixed(2);
+  }
+
+  var html = '';
+  html += '<div class="payment-step-success" style="border-left:4px solid #F59E0B;background:#FFFBEB;">';
+  html += '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';
+  html += '<div>';
+  html += '<h4 style="color:#92400E;">' + (window.t ? window.t('booking.reservation_created') : 'Reservierung erstellt') + ' — ' + escapeHtml(confirmationId) + '</h4>';
+  html += '<p style="font-size:.82rem;color:#B45309;margin-top:.25rem;">' + escapeHtml(email) + '</p>';
+  html += '</div>';
+  html += '</div>';
+
+  html += '<div class="payment-step-action">';
+  html += '<div style="display:inline-flex;align-items:center;gap:.5rem;background:#FEE2E2;color:#DC2626;padding:.5rem 1rem;border-radius:2rem;font-size:.85rem;font-weight:700;margin-bottom:1rem;">';
+  html += (window.t ? window.t('booking.payment_pending') : 'ZAHLUNG ERFORDERLICH');
+  html += '</div>';
+  html += '<p style="font-weight:500;color:var(--color-text);margin-bottom:.75rem;">' + escapeHtml(paymentMsg) + '</p>';
+  if (totalText) {
+    html += '<p style="font-size:1.8rem;font-weight:800;color:var(--color-primary);font-family:var(--font-heading);margin:.75rem 0;">' + escapeHtml(totalText) + '</p>';
+  }
+  html += '<button id="payNowBtn" class="btn btn-accent btn-lg payment-btn" style="font-size:1.1rem;padding:1rem 2.5rem;font-weight:700;">';
+  html += '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg> ';
+  html += escapeHtml(payBtnText);
+  html += '</button>';
+  html += '<p style="font-size:.82rem;color:var(--color-text-muted);margin-top:1rem;">' + (window.t ? window.t('booking.payment_secure_note') : 'Sichere Zahlung über Adyen.') + '</p>';
+  html += '</div>';
+
+  paymentSection.innerHTML = html;
+  paymentSection.style.display = 'block';
+  paymentSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+  var payBtn = document.getElementById('payNowBtn');
+  if (payBtn) {
+    payBtn.addEventListener('click', function () {
+      var popup = window.open(paymentLink, 'chaletswiss_payment', 'width=900,height=700,scrollbars=yes,resizable=yes');
+      if (!popup || popup.closed) {
+        window.open(paymentLink, '_blank');
+        return;
+      }
+      payBtn.disabled = true;
+      payBtn.textContent = window.t ? window.t('booking.waiting_for_payment') : 'Warte auf Zahlung...';
+      var pollTimer = setInterval(function () {
+        if (popup.closed) {
+          clearInterval(pollTimer);
+          cancelUnpaidBooking(reservationId, confirmationId, paymentSection);
+        }
+      }, 2000);
+    });
+  }
+}
+
+function showPaymentRetry(confirmationId, email, bookingData) {
+  if (bookingStatus) bookingStatus.style.display = 'none';
+  var paymentSection = getOrCreatePaymentSection();
+
+  var totalText = '';
+  if (selectedOffer && selectedOffer.totalGrossAmount) {
+    totalText = selectedOffer.totalGrossAmount.currency + ' ' + selectedOffer.totalGrossAmount.amount.toFixed(2);
+  }
+
+  var html = '';
+  html += '<div class="payment-step-success" style="border-left:4px solid #F59E0B;background:#FFFBEB;">';
+  html += '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';
+  html += '<div>';
+  html += '<h4 style="color:#92400E;">' + (window.t ? window.t('booking.reservation_created') : 'Reservierung erstellt') + ' — ' + escapeHtml(confirmationId) + '</h4>';
+  html += '<p style="font-size:.82rem;color:#DC2626;font-weight:600;margin-top:.25rem;">' + (window.t ? window.t('booking.payment_link_expired') : 'Zahlungslink konnte nicht erstellt werden. Bitte versuchen Sie es erneut.') + '</p>';
+  html += '</div>';
+  html += '</div>';
+
+  html += '<div class="payment-step-action">';
+  html += '<p style="font-weight:500;color:var(--color-text);margin-bottom:.75rem;">' + (window.t ? window.t('booking.payment_instruction') : 'Die Zahlung ist erforderlich, um Ihre Reservierung zu bestätigen.') + '</p>';
+  if (totalText) {
+    html += '<p style="font-size:1.8rem;font-weight:800;color:var(--color-primary);font-family:var(--font-heading);margin:.75rem 0;">' + escapeHtml(totalText) + '</p>';
+  }
+  html += '<button id="retryPaymentBtn" class="btn btn-accent btn-lg payment-btn">' + (window.t ? window.t('booking.retry_payment') : 'Zahlungslink erneut erstellen') + '</button>';
+  html += '<p style="font-size:.8rem;color:var(--color-text-muted);margin-top:1rem;">' + (window.t ? window.t('booking.or_contact') : 'Oder kontaktieren Sie uns:') + ' <a href="mailto:info@chaletswiss.ch" style="color:var(--color-accent);">info@chaletswiss.ch</a></p>';
+  html += '</div>';
+
+  paymentSection.innerHTML = html;
+  paymentSection.style.display = 'block';
+  paymentSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+  var retryBtn = document.getElementById('retryPaymentBtn');
+  if (retryBtn) {
+    retryBtn.addEventListener('click', function () {
+      retryBtn.disabled = true;
+      retryBtn.textContent = window.t ? window.t('booking.processing') : 'Wird verarbeitet...';
+
+      var retryPayload = {
+        bookingId: bookingData.confirmationId,
+        reservationId: bookingData.reservationId || '',
+        propertyId: PROPERTY_ID,
+        email: email,
+        totalAmount: selectedOffer && selectedOffer.totalGrossAmount ? selectedOffer.totalGrossAmount.amount : 0,
+        currency: selectedOffer && selectedOffer.totalGrossAmount ? selectedOffer.totalGrossAmount.currency : 'CHF',
+      };
+
+      fetch(API_BASE + '/api/payment-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(retryPayload),
+        mode: 'cors',
+      })
+      .then(function (res) { return res.json(); })
+      .then(function (linkData) {
+        if (linkData.paymentLink) {
+          showPaymentStep(bookingData.confirmationId, linkData.paymentLink, email, bookingData);
+        } else {
+          retryBtn.disabled = false;
+          retryBtn.textContent = window.t ? window.t('booking.retry_payment') : 'Zahlungslink erneut erstellen';
+          showStatus('error', linkData.error || (window.t ? window.t('booking.payment_link_expired') : 'Zahlungslink konnte nicht erstellt werden.'));
+        }
+      })
+      .catch(function () {
+        retryBtn.disabled = false;
+        retryBtn.textContent = window.t ? window.t('booking.retry_payment') : 'Zahlungslink erneut erstellen';
+        showStatus('error', window.t ? window.t('booking.error_connection') : 'Verbindungsfehler. Bitte versuchen Sie es erneut.');
+      });
+    });
+  }
+}
+
+})();

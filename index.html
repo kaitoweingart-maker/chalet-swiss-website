@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hotel Chalet Swiss Interlaken | Alpenhotel zwischen Thuner- & Brienzersee</title>
+  <meta name="description" content="Hotel Chalet Swiss in Interlaken — Charmantes Alpenhotel im Berner Oberland. Frühstück inklusive, Sauna, zentrale Lage. Direkt buchen zum besten Preis.">
+  <meta name="keywords" content="Hotel Interlaken, Chalet Swiss, Bernese Oberland, Jungfrau Region, Swiss Alps Hotel, Interlaken accommodation">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://chaletswiss.ch/">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Hotel Chalet Swiss Interlaken — Ihr Alpenhotel">
+  <meta property="og:description" content="Charmantes Alpenhotel im Herzen von Interlaken. Frühstück, Sauna & zentrale Lage. Direkt buchen für den besten Preis.">
+  <meta property="og:image" content="./assets/images/exterior/Interlaken_Dengler_Matthias_384.jpg">
+  <meta property="og:url" content="https://chaletswiss.ch/">
+  <meta property="og:locale" content="de_CH">
+  <meta property="og:locale:alternate" content="en_US">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Hotel Chalet Swiss Interlaken">
+  <meta name="twitter:description" content="Charmantes Alpenhotel im Herzen von Interlaken, zwischen Thuner- und Brienzersee.">
+  <meta name="twitter:image" content="./assets/images/exterior/Interlaken_Dengler_Matthias_384.jpg">
+
+  <!-- Preload critical assets for speed -->
+  <link rel="preload" href="./assets/images/exterior/Interlaken_Dengler_Matthias_384.jpg" as="image" fetchpriority="high">
+  <link rel="preload" href="./css/style.css" as="style">
+
+  <!-- DNS prefetch for API -->
+  <link rel="dns-prefetch" href="https://amanthos-website-api.onrender.com">
+  <link rel="preconnect" href="https://amanthos-website-api.onrender.com" crossorigin>
+
+  <!-- CDN preconnect for Three.js -->
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="./css/style.css">
+
+  <!-- Favicons -->
+  <link rel="icon" type="image/svg+xml" href="./assets/logos/Chalet Swiss Symbol Red.svg">
+  <link rel="apple-touch-icon" href="./assets/logos/Chalet-Swiss-Logo-Red.png">
+  <meta name="theme-color" content="#FAF8F5">
+
+  <!-- Schema.org Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Hotel",
+    "name": "Hotel Chalet Swiss",
+    "description": "Charmantes Alpenhotel im Herzen von Interlaken, zwischen Thuner- und Brienzersee.",
+    "url": "https://chaletswiss.ch",
+    "telephone": "+41338221822",
+    "email": "info@chaletswiss.ch",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "Seestrasse 22",
+      "addressLocality": "Interlaken",
+      "postalCode": "3800",
+      "addressCountry": "CH"
+    },
+    "geo": {
+      "@type": "GeoCoordinates",
+      "latitude": 46.6863,
+      "longitude": 7.8632
+    },
+    "starRating": {
+      "@type": "Rating",
+      "ratingValue": "3"
+    },
+    "amenityFeature": [
+      {"@type": "LocationFeatureSpecification", "name": "Free Wi-Fi", "value": true},
+      {"@type": "LocationFeatureSpecification", "name": "Breakfast Included", "value": true},
+      {"@type": "LocationFeatureSpecification", "name": "Sauna", "value": true},
+      {"@type": "LocationFeatureSpecification", "name": "Family Rooms", "value": true}
+    ],
+    "checkinTime": "15:00",
+    "checkoutTime": "11:00",
+    "priceRange": "CHF 99 - CHF 259",
+    "currenciesAccepted": "CHF",
+    "paymentAccepted": "Credit Card, Debit Card",
+    "image": "./assets/images/exterior/Interlaken_Dengler_Matthias_384.jpg"
+  }
+  </script>
+</head>
+<body>
+
+  <!-- ========== NAVIGATION ========== -->
+  <nav class="nav" id="nav">
+    <div class="nav-inner">
+      <a href="#" class="nav-logo">
+        <img src="./assets/logos/Chalet-Swiss-Logo-Negative.png" alt="Hotel Chalet Swiss" class="logo-white" id="logoWhite">
+        <img src="./assets/logos/Chalet-Swiss-Logo-Red.png" alt="Hotel Chalet Swiss" class="logo-color" id="logoColor">
+      </a>
+
+      <div class="nav-links" id="navLinks">
+        <a href="#welcome" data-i18n="nav.hotel">Hotel</a>
+        <a href="#rooms" data-i18n="nav.rooms">Zimmer</a>
+        <a href="#dining" data-i18n="nav.dining">Restaurant</a>
+        <a href="#wellness" data-i18n="nav.wellness">Wellness</a>
+        <a href="#location" data-i18n="nav.location">Lage</a>
+        <a href="#gallery" data-i18n="nav.gallery">Galerie</a>
+        <a href="#bookingBar" class="nav-book-btn" data-i18n="nav.book_now">Jetzt Buchen</a>
+        <div class="lang-selector" id="langSelector"></div>
+      </div>
+
+      <button class="hamburger" id="hamburger" aria-label="Menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <main>
+
+  <!-- ========== HERO ========== -->
+  <section class="hero" id="hero">
+    <canvas class="hero-canvas" id="heroCanvas"></canvas>
+    <div class="hero-bg">
+      <img src="./assets/images/exterior/Interlaken_Dengler_Matthias_893.jpg" alt="Hotel Chalet Swiss Interlaken exterior" loading="eager">
+    </div>
+    <div class="container">
+      <div class="hero-content">
+        <p class="hero-label">IN THE HEART OF THE ALPS</p>
+        <div class="hero-title-wrap">
+          <span class="hero-line"></span>
+          <h1>Hotel Chalet Swiss<br>Interlaken</h1>
+          <span class="hero-line"></span>
+        </div>
+      </div>
+      <div class="hero-booking" id="bookingBar">
+        <div class="hero-bb-field hero-bb-dates" id="daterangeWrap">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <span id="daterangeLabel" data-i18n="booking_bar.set_dates">Reisedaten festlegen</span>
+        </div>
+        <div class="hero-bb-divider"></div>
+        <div class="hero-bb-field hero-bb-guests" id="guestsWrap">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+          <span id="guestsLabel">1 Erwachsener</span>
+        </div>
+        <input type="hidden" id="bb-guests" value="1">
+        <input type="hidden" id="bb-checkin" data-date="">
+        <input type="hidden" id="bb-checkout" data-date="">
+        <input type="hidden" id="bb-children" value="0">
+        <span class="nights-badge" id="nightsBadge"></span>
+        <button class="hero-bb-search" id="bookingSearchBtn" data-i18n="booking_bar.search_btn">SUCHEN</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== SCROLL REVEAL WRAPPER ========== -->
+  <div class="reveal-wrapper" id="revealWrapper">
+
+  <!-- ========== BOOKING RESULTS ========== -->
+  <section class="section" id="booking">
+    <div class="container">
+      <div id="offersLoading" style="display:none;text-align:center;padding:2rem;">
+        <p data-i18n="booking.searching">Verfügbarkeit wird geprüft...</p>
+      </div>
+      <div id="offersGrid"></div>
+
+      <!-- Guest Form -->
+      <div id="guestForm">
+        <h3 class="guest-form-title" data-i18n="booking.guest_details">Ihre Angaben</h3>
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="guest-first" data-i18n="booking.first_name">Vorname *</label>
+            <input type="text" id="guest-first" required autocomplete="given-name">
+          </div>
+          <div class="form-group">
+            <label for="guest-last" data-i18n="booking.last_name">Nachname *</label>
+            <input type="text" id="guest-last" required autocomplete="family-name">
+          </div>
+          <div class="form-group">
+            <label for="guest-email" data-i18n="booking.email">E-Mail *</label>
+            <input type="email" id="guest-email" required autocomplete="email">
+          </div>
+          <div class="form-group">
+            <label for="guest-phone" data-i18n="booking.phone">Telefon</label>
+            <input type="tel" id="guest-phone" autocomplete="tel">
+          </div>
+        </div>
+
+        <!-- Promo Code -->
+        <div class="promo-code-section">
+          <label class="promo-label" data-i18n="booking.promo_label">Promo Code</label>
+          <div class="promo-code-row">
+            <input type="text" id="promoCodeInput" placeholder="Code eingeben" data-i18n-placeholder="booking.promo_placeholder">
+            <button class="btn btn-primary" id="applyPromoBtn" data-i18n="booking.promo_apply">Einlösen</button>
+          </div>
+          <div id="promoMessage"></div>
+          <div id="promoDiscountDisplay"></div>
+        </div>
+
+        <div class="form-actions">
+          <button class="btn btn-accent btn-lg" id="confirmBookingBtn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <span data-i18n="booking.confirm_reservation">Reservierung bestätigen</span>
+          </button>
+          <button class="btn btn-outline btn-cancel" id="cancelBookingBtn" data-i18n="booking.cancel">Abbrechen</button>
+        </div>
+      </div>
+
+      <div class="booking-status" id="bookingStatus" role="alert"></div>
+    </div>
+  </section>
+
+  <!-- ========== WELCOME ========== -->
+  <section class="section" id="welcome">
+    <div class="container">
+      <div class="welcome-grid">
+        <div class="welcome-image" data-animate>
+          <img src="./assets/images/exterior/Interlaken_Dengler_Matthias_426.jpg" alt="Hotel Chalet Swiss Interlaken" loading="lazy">
+        </div>
+        <div class="welcome-text" data-animate>
+          <p class="section-label" data-num="01" data-i18n="welcome.label">Willkommen</p>
+          <h2 data-i18n="welcome.title">Alpine Gastfreundschaft seit Generationen</h2>
+          <p data-i18n="welcome.text1">Das Hotel Chalet Swiss liegt im Herzen von Interlaken, eingebettet zwischen dem Thuner- und dem Brienzersee. Unser charmantes Alpenhotel verbindet traditionelle Schweizer Gastfreundschaft mit modernem Komfort.</p>
+          <p data-i18n="welcome.text2">Geniessen Sie das reichhaltige Frühstück, entspannen Sie in unserer Sauna und erkunden Sie die atemberaubende Bergwelt des Berner Oberlandes direkt vor der Haustür.</p>
+          <div class="welcome-features">
+            <div class="welcome-feature">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              <span data-i18n="welcome.feature1">Frühstück inklusive</span>
+            </div>
+            <div class="welcome-feature">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              <span data-i18n="welcome.feature2">Gratis WLAN</span>
+            </div>
+            <div class="welcome-feature">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              <span data-i18n="welcome.feature3">Sauna & Wellness</span>
+            </div>
+            <div class="welcome-feature">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              <span data-i18n="welcome.feature4">Zentrale Lage</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== ROOMS ========== -->
+  <section class="section section-alt" id="rooms">
+    <div class="container">
+      <div class="section-center" data-animate>
+        <p class="section-label" data-num="02" data-i18n="rooms.label">Unsere Zimmer</p>
+        <h2 class="section-title" data-i18n="rooms.title">Komfort mit alpinem Charme</h2>
+        <p class="section-subtitle" data-i18n="rooms.subtitle">Von gemütlichen Einzelzimmern bis zu geräumigen Familienzimmern - finden Sie Ihr perfektes Zuhause in den Bergen.</p>
+      </div>
+
+      <div class="rooms-grid" data-animate-stagger>
+
+        <!-- Einzelzimmer -->
+        <div class="room-card">
+          <div class="room-card-gallery" data-room-gallery>
+            <img src="./assets/images/einzelzimmer/interlaken-einzelzimmer-1.jpg" alt="Einzelzimmer" data-images='["./assets/images/einzelzimmer/interlaken-einzelzimmer-1.jpg","./assets/images/einzelzimmer/interlaken-einzelzimmer-2.jpg","./assets/images/einzelzimmer/interlaken-einzelzimmer-3.jpg"]' loading="lazy">
+            <button class="room-gallery-nav room-gallery-prev" aria-label="Previous">&lsaquo;</button>
+            <button class="room-gallery-nav room-gallery-next" aria-label="Next">&rsaquo;</button>
+            <div class="room-gallery-dots"></div>
+          </div>
+          <div class="room-card-body">
+            <h3 data-i18n="rooms.single_title">Einzelzimmer</h3>
+            <p data-i18n="rooms.single_desc">Gemütliches Zimmer für Alleinreisende mit allem Komfort für einen erholsamen Aufenthalt.</p>
+            <div class="room-amenities">
+              <span class="room-amenity" data-i18n="rooms.amenity_wifi">WLAN</span>
+              <span class="room-amenity" data-i18n="rooms.amenity_breakfast">Frühstück</span>
+              <span class="room-amenity" data-i18n="rooms.amenity_tv">TV</span>
+            </div>
+            <div class="room-card-footer">
+              <div class="room-price" data-i18n="rooms.single_price">ab CHF 99 <small>/ Nacht</small></div>
+              <a href="#bookingBar" class="room-book-btn" data-scroll-to="bookingBar" data-i18n="rooms.book_btn">Buchen</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Standard Doppelzimmer -->
+        <div class="room-card">
+          <div class="room-card-gallery" data-room-gallery>
+            <img src="./assets/images/standard-doppel/interlaken-standard-doppelzimmer-1.jpg" alt="Standard Doppelzimmer" data-images='["./assets/images/standard-doppel/interlaken-standard-doppelzimmer-1.jpg","./assets/images/standard-doppel/interlaken-standard-doppelzimmer-2.jpg","./assets/images/standard-doppel/interlaken-standard-doppelzimmer-3.jpg"]' loading="lazy">
+            <button class="room-gallery-nav room-gallery-prev" aria-label="Previous">&lsaquo;</button>
+            <button class="room-gallery-nav room-gallery-next" aria-label="Next">&rsaquo;</button>
+            <div class="room-gallery-dots"></div>
+          </div>
+          <div class="room-card-body">
+            <h3 data-i18n="rooms.standard_title">Standard Doppelzimmer</h3>
+            <p data-i18n="rooms.standard_desc">Komfortables Doppelzimmer mit allem, was Sie für einen angenehmen Aufenthalt benötigen.</p>
+            <div class="room-amenities">
+              <span class="room-amenity" data-i18n="rooms.amenity_wifi">WLAN</span>
+              <span class="room-amenity" data-i18n="rooms.amenity_breakfast">Frühstück</span>
+              <span class="room-amenity" data-i18n="rooms.amenity_tv">TV</span>
+              <span class="room-amenity" data-i18n="rooms.amenity_safe">Safe</span>
+            </div>
+            <div class="room-card-footer">
+              <div class="room-price" data-i18n="rooms.standard_price">ab CHF 139 <small>/ Nacht</small></div>
+              <a href="#bookingBar" class="room-book-btn" data-scroll-to="bookingBar" data-i18n="rooms.book_btn">Buchen</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Superior Doppelzimmer -->
+        <div class="room-card">
+          <div class="room-card-gallery" data-room-gallery>
+            <img src="./assets/images/superior-doppel/interlaken-superior-doppelzimmer-1.jpg" alt="Superior Doppelzimmer" data-images='["./assets/images/superior-doppel/interlaken-superior-doppelzimmer-1.jpg","./assets/images/superior-doppel/interlaken-superior-doppelzimmer-2.jpg","./assets/images/superior-doppel/interlaken-superior-doppelzimmer-3.jpg","./assets/images/superior-doppel/interlaken-superior-doppelzimmer-4.jpg","./assets/images/superior-doppel/interlaken-superior-doppelzimmer-5.jpg"]' loading="lazy">
+            <button class="room-gallery-nav room-gallery-prev" aria-label="Previous">&lsaquo;</button>
+            <button class="room-gallery-nav room-gallery-next" aria-label="Next">&rsaquo;</button>
+            <div class="room-gallery-dots"></div>
+          </div>
+          <div class="room-card-body">
+            <h3 data-i18n="rooms.superior_title">Superior Doppelzimmer</h3>
+            <p data-i18n="rooms.superior_desc">Geräumiges Zimmer mit gehobener Ausstattung und besonderem Komfort für anspruchsvolle Gäste.</p>
+            <div class="room-amenities">
+              <span class="room-amenity" data-i18n="rooms.amenity_wifi">WLAN</span>
+              <span class="room-amenity" data-i18n="rooms.amenity_breakfast">Frühstück</span>
+              <span class="room-amenity" data-i18n="rooms.amenity_tv">TV</span>
+              <span class="room-amenity" data-i18n="rooms.amenity_safe">Safe</span>
+              <span class="room-amenity" data-i18n="rooms.amenity_minibar">Minibar</span>
+            </div>
+            <div class="room-card-footer">
+              <div class="room-price" data-i18n="rooms.superior_price">ab CHF 169 <small>/ Nacht</small></div>
+              <a href="#bookingBar" class="room-book-btn" data-scroll-to="bookingBar" data-i18n="rooms.book_btn">Buchen</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Superior Twin Room - Balcony -->
+        <div class="room-card">
+          <div class="room-card-gallery" data-room-gallery>
+            <img src="./assets/images/superior-twin-balcony/Interlaken_Dengler_Matthias_45.jpg" alt="Superior Twin Room - Balcony" data-images='["./assets/images/superior-twin-balcony/Interlaken_Dengler_Matthias_45.jpg","./assets/images/superior-twin-balcony/Interlaken_Dengler_Matthias_67.jpg","./assets/images/superior-twin-balcony/Interlaken_Dengler_Matthias_85.jpg","./assets/images/superior-twin-balcony/Interlaken_Dengler_Matthias_102.jpg","./assets/images/superior-twin-balcony/Interlaken_Dengler_Matthias_112.jpg"]' loading="lazy">
+            <button class="room-gallery-nav room-gallery-prev" aria-label="Previous">&lsaquo;</button>
+            <button class="room-gallery-nav room-gallery-next" aria-label="Next">&rsaquo;</button>
+            <div class="room-gallery-dots"></div>
+          </div>
+          <div class="room-card-body">
+            <h3 data-i18n="rooms.twin_balcony_title">Superior Twin - Balkon</h3>
+            <p data-i18n="rooms.twin_balcony_desc">Elegantes Zweibettzimmer mit privatem Balkon und Blick auf die Bergwelt.</p>
+            <div class="room-amenities">
+              <span class="room-amenity" data-i18n="rooms.amenity_balcony">Balkon</span>
+              <span class="room-amenity" data-i18n="rooms.amenity_wifi">WLAN</span>
+              <span class="room-amenity" data-i18n="rooms.amenity_breakfast">Frühstück</span>
+              <span class="room-amenity" data-i18n="rooms.amenity_view">Bergblick</span>
+            </div>
+            <div class="room-card-footer">
+              <div class="room-price" data-i18n="rooms.twin_balcony_price">ab CHF 189 <small>/ Nacht</small></div>
+              <a href="#bookingBar" class="room-book-btn" data-scroll-to="bookingBar" data-i18n="rooms.book_btn">Buchen</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Family Room 3 Twin Beds -->
+        <div class="room-card">
+          <div class="room-card-gallery" data-room-gallery>
+            <img src="./assets/images/family-3/Interlaken_Dengler_Matthias_17.jpg" alt="Family Room 3 Twin Beds" data-images='["./assets/images/family-3/Interlaken_Dengler_Matthias_17.jpg","./assets/images/family-3/Interlaken_Dengler_Matthias_27.jpg","./assets/images/family-3/Interlaken_Dengler_Matthias_50.jpg"]' loading="lazy">
+            <button class="room-gallery-nav room-gallery-prev" aria-label="Previous">&lsaquo;</button>
+            <button class="room-gallery-nav room-gallery-next" aria-label="Next">&rsaquo;</button>
+            <div class="room-gallery-dots"></div>
+          </div>
+          <div class="room-card-body">
+            <h3 data-i18n="rooms.family3_title">Familienzimmer (3 Betten)</h3>
+            <p data-i18n="rooms.family3_desc">Geräumiges Familienzimmer mit drei Einzelbetten, ideal für kleine Familien oder Gruppen.</p>
+            <div class="room-amenities">
+              <span class="room-amenity" data-i18n="rooms.amenity_3beds">3 Betten</span>
+              <span class="room-amenity" data-i18n="rooms.amenity_wifi">WLAN</span>
+              <span class="room-amenity" data-i18n="rooms.amenity_breakfast">Frühstück</span>
+              <span class="room-amenity" data-i18n="rooms.amenity_family">Familienfreundlich</span>
+            </div>
+            <div class="room-card-footer">
+              <div class="room-price" data-i18n="rooms.family3_price">ab CHF 219 <small>/ Nacht</small></div>
+              <a href="#bookingBar" class="room-book-btn" data-scroll-to="bookingBar" data-i18n="rooms.book_btn">Buchen</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Family Room 4 Twin Beds -->
+        <div class="room-card">
+          <div class="room-card-gallery" data-room-gallery>
+            <img src="./assets/images/family-4/interlaken-familienzimmer-4-1.jpg" alt="Family Room 4 Twin Beds" data-images='["./assets/images/family-4/interlaken-familienzimmer-4-1.jpg","./assets/images/family-4/interlaken-familienzimmer-4-2.jpg","./assets/images/family-4/interlaken-familienzimmer-4-3.jpg","./assets/images/family-4/interlaken-familienzimmer-4-4.jpg","./assets/images/family-4/interlaken-familienzimmer-4-5.jpg"]' loading="lazy">
+            <button class="room-gallery-nav room-gallery-prev" aria-label="Previous">&lsaquo;</button>
+            <button class="room-gallery-nav room-gallery-next" aria-label="Next">&rsaquo;</button>
+            <div class="room-gallery-dots"></div>
+          </div>
+          <div class="room-card-body">
+            <h3 data-i18n="rooms.family4_title">Familienzimmer (4 Betten)</h3>
+            <p data-i18n="rooms.family4_desc">Unser grösstes Familienzimmer mit vier Einzelbetten, perfekt für Familien und Gruppen.</p>
+            <div class="room-amenities">
+              <span class="room-amenity" data-i18n="rooms.amenity_4beds">4 Betten</span>
+              <span class="room-amenity" data-i18n="rooms.amenity_wifi">WLAN</span>
+              <span class="room-amenity" data-i18n="rooms.amenity_breakfast">Frühstück</span>
+              <span class="room-amenity" data-i18n="rooms.amenity_spacious">Geräumig</span>
+            </div>
+            <div class="room-card-footer">
+              <div class="room-price" data-i18n="rooms.family4_price">ab CHF 259 <small>/ Nacht</small></div>
+              <a href="#bookingBar" class="room-book-btn" data-scroll-to="bookingBar" data-i18n="rooms.book_btn">Buchen</a>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== DINING ========== -->
+  <section class="section" id="dining">
+    <div class="container">
+      <div class="feature-split" data-animate>
+        <div class="feature-images">
+          <img src="./assets/images/fruehstueck/Interlaken_Dengler_Matthias_133.jpg" alt="Frühstücksbuffet" loading="lazy">
+          <img src="./assets/images/fruehstueck/Interlaken_Dengler_Matthias_162.jpg" alt="Frühstück Detail" loading="lazy">
+          <img src="./assets/images/fruehstueck/Interlaken_Dengler_Matthias_168.jpg" alt="Frühstück Auswahl" loading="lazy">
+        </div>
+        <div class="feature-text">
+          <p class="section-label" data-num="03" data-i18n="dining.label">Frühstück</p>
+          <h2 data-i18n="dining.title">Starten Sie den Tag richtig</h2>
+          <p data-i18n="dining.text">Unser reichhaltiges Frühstücksbuffet verwöhnt Sie jeden Morgen mit frischem Brot, lokalen Käsesorten, hausgemachten Konfitüren und vielem mehr. Geniessen Sie Ihr Frühstück mit Blick auf die Berge.</p>
+          <div class="feature-highlights">
+            <div class="feature-highlight">
+              <div class="feature-highlight-icon">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              </div>
+              <span data-i18n="dining.highlight1">Reichhaltiges Buffet mit regionalen Produkten</span>
+            </div>
+            <div class="feature-highlight">
+              <div class="feature-highlight-icon">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              </div>
+              <span data-i18n="dining.highlight2">Frische Backwaren und Schweizer Käse</span>
+            </div>
+            <div class="feature-highlight">
+              <div class="feature-highlight-icon">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              </div>
+              <span data-i18n="dining.highlight3">Im Zimmerpreis inklusive</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== WELLNESS ========== -->
+  <section class="section section-alt" id="wellness">
+    <div class="container">
+      <div class="feature-split reverse" data-animate>
+        <div class="feature-images">
+          <img src="./assets/images/sauna/Interlaken_Dengler_Matthias_309.jpg" alt="Sauna" loading="lazy">
+          <img src="./assets/images/sauna/Interlaken_Dengler_Matthias_922.jpg" alt="Sauna Bereich" loading="lazy">
+        </div>
+        <div class="feature-text">
+          <p class="section-label" data-num="04" data-i18n="wellness.label">Wellness</p>
+          <h2 data-i18n="wellness.title">Entspannung nach einem Tag in den Bergen</h2>
+          <p data-i18n="wellness.text">Nach einem aktiven Tag in der Jungfrau Region erwartet Sie unsere hauseigene Sauna. Lassen Sie die Seele baumeln und geniessen Sie wohltuende Wärme für Körper und Geist.</p>
+          <div class="feature-highlights">
+            <div class="feature-highlight">
+              <div class="feature-highlight-icon">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              </div>
+              <span data-i18n="wellness.highlight1">Finnische Sauna</span>
+            </div>
+            <div class="feature-highlight">
+              <div class="feature-highlight-icon">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              </div>
+              <span data-i18n="wellness.highlight2">Kostenlos für Hotelgäste</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== LOCATION ========== -->
+  <section class="section" id="location">
+    <div class="container">
+      <div class="section-center" data-animate>
+        <p class="section-label" data-num="05" data-i18n="location.label">Lage</p>
+        <h2 class="section-title" data-i18n="location.title">Im Herzen von Interlaken</h2>
+        <p class="section-subtitle" data-i18n="location.subtitle">Perfekter Ausgangspunkt für Ausflüge in die Jungfrau Region und das Berner Oberland.</p>
+      </div>
+
+      <div class="location-grid" data-animate>
+        <div class="location-map">
+          <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2735.5!2d7.8632!3d46.6863!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zNDbCsDQxJzEwLjciTiA3wrA1MScxMS41IkU!5e0!3m2!1sde!2sch!4v1" allowfullscreen loading="lazy" title="Hotel Chalet Swiss Interlaken on map"></iframe>
+        </div>
+        <div class="location-info">
+          <h3 data-i18n="location.address_title">Hotel Chalet Swiss</h3>
+          <p>Seestrasse 22, 3800 Interlaken</p>
+          <p data-i18n="location.desc">Interlaken ist das Tor zur Jungfrau Region, einem UNESCO-Welterbe. Von unserem Hotel aus erreichen Sie die beliebtesten Ausflugsziele der Schweiz in wenigen Minuten.</p>
+
+          <div class="location-highlights">
+            <div class="location-highlight">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <div>
+                <strong data-i18n="location.poi1_title">Jungfraujoch</strong>
+                <span data-i18n="location.poi1_time">45 Min. mit der Bahn</span>
+              </div>
+            </div>
+            <div class="location-highlight">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <div>
+                <strong data-i18n="location.poi2_title">Harder Kulm</strong>
+                <span data-i18n="location.poi2_time">10 Min. Standseilbahn</span>
+              </div>
+            </div>
+            <div class="location-highlight">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <div>
+                <strong data-i18n="location.poi3_title">Schynige Platte</strong>
+                <span data-i18n="location.poi3_time">30 Min. Zahnradbahn</span>
+              </div>
+            </div>
+            <div class="location-highlight">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <div>
+                <strong data-i18n="location.poi4_title">Interlaken West</strong>
+                <span data-i18n="location.poi4_time">5 Min. zu Fuss</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== GALLERY ========== -->
+  <section class="section section-alt" id="gallery">
+    <div class="container">
+      <div class="section-center" data-animate>
+        <p class="section-label" data-num="06" data-i18n="gallery.label">Galerie</p>
+        <h2 class="section-title" data-i18n="gallery.title">Impressionen</h2>
+      </div>
+
+      <div class="gallery-grid" data-animate-stagger>
+        <div class="gallery-item" data-lightbox>
+          <img src="./assets/images/exterior/Interlaken_Dengler_Matthias_559.jpg" alt="Hotel exterior" loading="lazy">
+        </div>
+        <div class="gallery-item" data-lightbox>
+          <img src="./assets/images/superior-doppel/interlaken-superior-doppelzimmer-6.jpg" alt="Superior room" loading="lazy">
+        </div>
+        <div class="gallery-item" data-lightbox>
+          <img src="./assets/images/fruehstueck/Interlaken_Dengler_Matthias_1016.jpg" alt="Breakfast" loading="lazy">
+        </div>
+        <div class="gallery-item" data-lightbox>
+          <img src="./assets/images/lifestyle/Interlaken_Dengler_Matthias_671.jpg" alt="Lifestyle" loading="lazy">
+        </div>
+        <div class="gallery-item" data-lightbox>
+          <img src="./assets/images/superior-twin-balcony/Interlaken_Dengler_Matthias_102.jpg" alt="Twin room balcony" loading="lazy">
+        </div>
+        <div class="gallery-item" data-lightbox>
+          <img src="./assets/images/exterior/Interlaken_Dengler_Matthias_911.jpg" alt="Hotel view" loading="lazy">
+        </div>
+        <div class="gallery-item" data-lightbox>
+          <img src="./assets/images/fruehstueck/Interlaken_Dengler_Matthias_206.jpg" alt="Breakfast detail" loading="lazy">
+        </div>
+        <div class="gallery-item" data-lightbox>
+          <img src="./assets/images/lifestyle/Interlaken_Dengler_Matthias_715.jpg" alt="Hotel lifestyle" loading="lazy">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== TRUST / SOCIAL PROOF ========== -->
+  <section class="section" id="trust">
+    <div class="container">
+      <div class="section-center" data-animate>
+        <p class="section-label" data-num="07" data-i18n="trust.label">Warum direkt buchen?</p>
+        <h2 class="section-title" data-i18n="trust.title">Bestpreis-Garantie bei Direktbuchung</h2>
+      </div>
+
+      <div class="trust-grid" data-animate-stagger>
+        <div class="trust-card">
+          <div class="trust-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <h3 data-i18n="trust.guarantee_title">Bestpreis-Garantie</h3>
+          <p data-i18n="trust.guarantee_desc">Buchen Sie direkt und erhalten Sie garantiert den besten verfügbaren Preis. Keine versteckten Gebühren.</p>
+        </div>
+        <div class="trust-card">
+          <div class="trust-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+          </div>
+          <h3 data-i18n="trust.secure_title">Sichere Zahlung</h3>
+          <p data-i18n="trust.secure_desc">SSL-verschlüsselte Bezahlung über Adyen. Ihre Daten sind bei uns sicher.</p>
+        </div>
+        <div class="trust-card">
+          <div class="trust-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          </div>
+          <h3 data-i18n="trust.instant_title">Sofortige Bestätigung</h3>
+          <p data-i18n="trust.instant_desc">Erhalten Sie Ihre Buchungsbestätigung sofort per E-Mail. Kein Warten, kein Aufwand.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== FINAL CTA ========== -->
+  <section class="section cta-final" id="final-cta">
+    <div class="container" style="text-align:center">
+      <h2 class="cta-final-title" data-animate data-i18n="cta.title">Bereit für Ihren Aufenthalt in den Alpen?</h2>
+      <p class="cta-final-sub" data-animate data-i18n="cta.subtitle">Buchen Sie direkt und sichern Sie sich den besten Preis für Ihr Erlebnis im Berner Oberland.</p>
+      <div class="cta-final-actions" data-animate>
+        <a href="#bookingBar" class="btn btn-accent btn-lg" data-scroll-to="bookingBar" style="font-size:1.1rem;padding:1.1rem 2.5rem;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <span data-i18n="cta.button">Verfügbarkeit prüfen</span>
+        </a>
+        <p class="cta-reassurance" data-i18n="cta.reassurance">Keine Kreditkarte nötig zum Suchen &middot; Bestpreis-Garantie bei Direktbuchung</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== FOOTER ========== -->
+  <footer class="footer" id="contact">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <h3>Hotel Chalet Swiss</h3>
+          <p data-i18n="footer.brand_desc">Charmantes Alpenhotel im Herzen von Interlaken, zwischen Thuner- und Brienzersee.</p>
+          <div class="footer-social">
+            <a href="https://www.instagram.com/hotelchaletswiss" target="_blank" rel="noopener" aria-label="Instagram">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+            </a>
+            <a href="https://www.facebook.com/hotelchaletswiss" target="_blank" rel="noopener" aria-label="Facebook">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+            </a>
+          </div>
+        </div>
+
+        <div class="footer-links">
+          <h4 data-i18n="footer.quick_links">Quicklinks</h4>
+          <ul>
+            <li><a href="#rooms" data-i18n="nav.rooms">Zimmer</a></li>
+            <li><a href="#dining" data-i18n="nav.dining">Restaurant</a></li>
+            <li><a href="#wellness" data-i18n="nav.wellness">Wellness</a></li>
+            <li><a href="#gallery" data-i18n="nav.gallery">Galerie</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-links">
+          <h4 data-i18n="footer.explore">Entdecken</h4>
+          <ul>
+            <li><a href="#location" data-i18n="footer.interlaken">Interlaken</a></li>
+            <li><a href="#" data-i18n="footer.jungfrau">Jungfrau Region</a></li>
+            <li><a href="#" data-i18n="footer.activities">Aktivitäten</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-contact">
+          <h4 data-i18n="footer.contact_title">Kontakt</h4>
+          <p>Seestrasse 22, 3800 Interlaken</p>
+          <p><a href="tel:+41338221822">+41 33 822 18 22</a></p>
+          <p><a href="mailto:info@chaletswiss.ch">info@chaletswiss.ch</a></p>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p>&copy; 2026 Hotel Chalet Swiss. <span data-i18n="footer.rights">Alle Rechte vorbehalten.</span></p>
+        <div class="footer-legal">
+          <a href="#" data-i18n="footer.privacy">Datenschutz</a>
+          <a href="#" data-i18n="footer.imprint">Impressum</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  </div><!-- /reveal-wrapper -->
+  </main>
+
+  <!-- Cookie Banner -->
+  <div id="cookieBanner" class="cookie-banner" style="display:none" role="dialog" aria-label="Cookie consent">
+    <div class="cookie-banner-inner">
+      <p data-i18n="cookies.text">Wir verwenden essentielle Cookies für die Funktionalität. Keine Tracking-Cookies.</p>
+      <div class="cookie-actions">
+        <button class="cookie-accept" id="cookieAccept" data-i18n="cookies.accept">Verstanden</button>
+        <a href="#" class="cookie-link" data-i18n="cookies.learn_more">Datenschutz</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lightbox -->
+  <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Image viewer">
+    <button class="lightbox-close" id="lightboxClose" aria-label="Close">&times;</button>
+    <button class="lightbox-nav lightbox-prev" id="lightboxPrev" aria-label="Previous">&lsaquo;</button>
+    <img src="" alt="" id="lightboxImg">
+    <button class="lightbox-nav lightbox-next" id="lightboxNext" aria-label="Next">&rsaquo;</button>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" defer></script>
+  <script src="./js/hero3d.js" defer></script>
+  <script src="./js/i18n.js" defer></script>
+  <script src="./js/app.js" defer></script>
+  <script src="./js/booking.js" defer></script>
+</body>
+</html>
