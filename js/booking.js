@@ -352,7 +352,7 @@ function buildGuestsDropdown() {
       '<span class="guests-row-label" data-i18n="booking_bar.adults">Erwachsene</span>' +
       '<div class="guests-stepper">' +
         '<button type="button" class="guests-step" id="adultMinus" aria-label="Weniger">\u2212</button>' +
-        '<span class="guests-count" id="adultCount">1</span>' +
+        '<span class="guests-count" id="adultCount">2</span>' +
         '<button type="button" class="guests-step" id="adultPlus" aria-label="Mehr">+</button>' +
       '</div>' +
     '</div>' +
@@ -639,7 +639,7 @@ function fetchOffers() {
 
     var helpP = document.createElement('p');
     helpP.style.cssText = 'font-size:.82rem;color:var(--color-text-muted);margin-bottom:1rem;';
-    helpP.textContent = window.t ? window.t('booking.error_help') : 'Bitte versuchen Sie es erneut oder kontaktieren Sie uns unter info@chaletswiss.ch';
+    helpP.textContent = window.t ? window.t('booking.error_help') : 'Bitte versuchen Sie es erneut oder kontaktieren Sie uns unter chaletswiss@amanthos.com';
     noOffersDiv.appendChild(helpP);
 
     var retryBtn = document.createElement('button');
@@ -681,15 +681,19 @@ function renderOffers(data) {
 
   if (nonRefundable.length > 0) {
     html += '<h4 class="offers-category-title">' + (window.t ? window.t('booking.best_price_label') : 'Bester Preis') + '</h4>';
+    html += '<div class="offers-grid-wrap">';
     nonRefundable.forEach(function (offer, i) {
       html += renderOfferCard(offer, 'non-refundable', i, true);
     });
+    html += '</div>';
   }
   if (refundable.length > 0) {
     html += '<h4 class="offers-category-title">' + (window.t ? window.t('booking.flexible_label') : 'Flexibel') + '</h4>';
+    html += '<div class="offers-grid-wrap">';
     refundable.forEach(function (offer, i) {
       html += renderOfferCard(offer, 'refundable', nonRefundable.length + i, false);
     });
+    html += '</div>';
   }
 
   offersGrid.innerHTML = html;
@@ -721,16 +725,19 @@ function renderOfferCard(offer, categoryClass, index, isBestPrice) {
   html += '<span class="offer-category ' + categoryClass + '">' + (categoryClass === 'refundable' ? (window.t ? window.t('booking.flexible') : 'Flexibel') : (window.t ? window.t('booking.best_price_tag') : 'Bester Preis')) + '</span>';
   html += '</div>';
   html += '<div class="offer-rate-name">' + escapeHtml(offer.ratePlanName || '') + '</div>';
+  html += '<div class="offer-bottom">';
+  html += '<div>';
   html += '<div class="offer-pricing">';
   html += '<div class="offer-price">CHF ' + perNightAmount + ' <small>' + (window.t ? window.t('booking.per_night') : '/ Nacht') + '</small></div>';
   html += '<div class="offer-total">CHF ' + totalAmount + ' ' + (window.t ? window.t('booking.total') : 'total') + '</div>';
   html += '</div>';
-
   html += '<div class="offer-trust">';
-  html += '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> ';
+  html += '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> ';
   html += (window.t ? window.t('booking.best_rate_guaranteed') : 'Bestpreis-Garantie');
   html += '</div>';
+  html += '</div>';
   html += '<div class="offer-select-btn">' + (window.t ? window.t('booking.select') : 'Auswählen') + '</div>';
+  html += '</div>';
   html += '</div>';
   return html;
 }
@@ -1095,7 +1102,7 @@ function showPaymentRetry(confirmationId, email, bookingData) {
     html += '<p style="font-size:1.8rem;font-weight:800;color:var(--color-primary);font-family:var(--font-heading);margin:.75rem 0;">' + escapeHtml(totalText) + '</p>';
   }
   html += '<button id="retryPaymentBtn" class="btn btn-accent btn-lg payment-btn">' + (window.t ? window.t('booking.retry_payment') : 'Zahlungslink erneut erstellen') + '</button>';
-  html += '<p style="font-size:.8rem;color:var(--color-text-muted);margin-top:1rem;">' + (window.t ? window.t('booking.or_contact') : 'Oder kontaktieren Sie uns:') + ' <a href="mailto:info@chaletswiss.ch" style="color:var(--color-accent);">info@chaletswiss.ch</a></p>';
+  html += '<p style="font-size:.8rem;color:var(--color-text-muted);margin-top:1rem;">' + (window.t ? window.t('booking.or_contact') : 'Oder kontaktieren Sie uns:') + ' <a href="mailto:chaletswiss@amanthos.com" style="color:var(--color-accent);">chaletswiss@amanthos.com</a></p>';
   html += '</div>';
 
   paymentSection.innerHTML = html;
