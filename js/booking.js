@@ -31,6 +31,9 @@ var UPSELL_ITEMS = [
 ];
 var selectedUpsells = {};
 
+// Currency rounding — all CHF amounts go through this to avoid floating-point drift
+function roundCHF(n) { return Math.round(n * 100) / 100; }
+
 var searchBtn = document.getElementById('bookingSearchBtn');
 var bookingSection = document.getElementById('booking');
 var offersGrid = document.getElementById('offersGrid');
@@ -733,8 +736,8 @@ function renderOfferCard(offer, categoryClass, index, isBestPrice) {
   var total = offer.totalGrossAmount || {};
   var perNight = offer.averagePerNight || {};
   var currency = 'CHF';
-  var totalAmount = total.amount ? total.amount.toFixed(2) : '\u2014';
-  var perNightAmount = perNight.amount ? perNight.amount.toFixed(2) : '\u2014';
+  var totalAmount = total.amount ? (Math.round(total.amount * 100) / 100).toFixed(2) : '\u2014';
+  var perNightAmount = perNight.amount ? (Math.round(perNight.amount * 100) / 100).toFixed(2) : '\u2014';
 
   var html = '<div class="offer-card' + (isBestPrice ? ' best-price' : '') + '" data-index="' + index + '" tabindex="0" role="button" aria-label="' + escapeHtml(offer.unitGroupName || '') + '">';
   html += '<div class="offer-card-top">';
@@ -798,7 +801,8 @@ function renderUpsells() {
     html += '<div class="upsell-card-name">' + escapeHtml(name) + '</div>';
     html += '<div class="upsell-card-desc">' + escapeHtml(desc) + '</div>';
     html += '</div>';
-    var priceLabel = 'CHF ' + item.price.toFixed(2);
+    var priceCents = Math.round(item.price * 100);
+    var priceLabel = 'CHF ' + (priceCents / 100).toFixed(2);
     if (item.perDay) priceLabel += ' / ' + (window.t ? window.t('booking.per_day') : 'Tag');
     html += '<span class="upsell-card-price">' + priceLabel + '</span>';
     html += '<div class="upsell-card-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>';
@@ -838,13 +842,14 @@ function getBookingNights() {
 }
 
 function getUpsellTotal() {
-  var total = 0;
+  var totalCents = 0;
   var nights = getBookingNights();
   Object.keys(selectedUpsells).forEach(function (id) {
     var item = selectedUpsells[id];
-    total += item.perDay ? Math.round(item.price * nights * 100) / 100 : Math.round(item.price * 100) / 100;
+    var priceCents = Math.round(item.price * 100);
+    totalCents += item.perDay ? priceCents * nights : priceCents;
   });
-  return Math.round(total * 100) / 100;
+  return totalCents / 100;
 }
 
 function getUpsellComment() {
@@ -852,10 +857,12 @@ function getUpsellComment() {
   var nights = getBookingNights();
   Object.keys(selectedUpsells).forEach(function (id) {
     var item = selectedUpsells[id];
+    var priceCents = Math.round(item.price * 100);
     if (item.perDay && nights > 1) {
-      items.push(item.nameFallback + ' (CHF ' + item.price.toFixed(2) + ' x ' + nights + ' = CHF ' + (item.price * nights).toFixed(2) + ')');
+      var totalCents = priceCents * nights;
+      items.push(item.nameFallback + ' (CHF ' + (priceCents / 100).toFixed(2) + ' x ' + nights + ' = CHF ' + (totalCents / 100).toFixed(2) + ')');
     } else {
-      items.push(item.nameFallback + ' (CHF ' + item.price.toFixed(2) + ')');
+      items.push(item.nameFallback + ' (CHF ' + (priceCents / 100).toFixed(2) + ')');
     }
   });
   return items.length > 0 ? ' | Add-ons: ' + items.join(', ') : '';
@@ -882,29 +889,32 @@ function applyPromoCode() {
 }
 
 function getDiscountedTotal() {
-  if (!selectedOffer || !selectedOffer.totalGrossAmount) return null;
-  var total = selectedOffer.totalGrossAmount.amount;
-  if (appliedPromo) { total = total * (1 - appliedPromo.discount); }
-  return { amount: Math.round(total * 100) / 100, currency: selectedOffer.totalGrossAmount.currency };
+  if (!selectedOffer || !selectedOffer.totalGrossAmount || !appliedPromo) return null;
+  var totalCents = Math.round(selectedOffer.totalGrossAmount.amount * 100);
+  totalCents = Math.round(totalCents * (1 - appliedPromo.discount));
+  return { amount: totalCents / 100, currency: selectedOffer.totalGrossAmount.currency };
 }
 
 function updatePriceDisplay() {
   var display = document.getElementById('promoDiscountDisplay');
   if (!display || !selectedOffer || !selectedOffer.totalGrossAmount) return;
-  var upsellTotal = getUpsellTotal();
+  var upsellCents = Math.round(getUpsellTotal() * 100);
   var html = '';
-  if (appliedPromo || upsellTotal > 0) {
+  if (appliedPromo || upsellCents > 0) {
     var orig = selectedOffer.totalGrossAmount;
+    var origCents = Math.round(orig.amount * 100);
     var disc = getDiscountedTotal();
-    if (appliedPromo) {
-      html += '<span style="text-decoration:line-through;color:var(--color-text-muted);font-size:.9rem;">' + orig.currency + ' ' + orig.amount.toFixed(2) + '</span> ';
-      html += '<span style="color:#059669;font-weight:700;font-size:1.1rem;">' + disc.currency + ' ' + disc.amount.toFixed(2) + '</span>';
+    if (appliedPromo && disc) {
+      var discCents = Math.round(disc.amount * 100);
+      html += '<span style="text-decoration:line-through;color:var(--color-text-muted);font-size:.9rem;">' + orig.currency + ' ' + (origCents / 100).toFixed(2) + '</span> ';
+      html += '<span style="color:#059669;font-weight:700;font-size:1.1rem;">' + disc.currency + ' ' + (discCents / 100).toFixed(2) + '</span>';
     }
-    if (upsellTotal > 0) {
-      var roomTotal = appliedPromo ? disc.amount : orig.amount;
+    if (upsellCents > 0) {
+      var roomCents = (appliedPromo && disc) ? Math.round(disc.amount * 100) : origCents;
+      var combinedCents = roomCents + upsellCents;
       html += '<div style="font-size:.82rem;color:var(--color-text-muted);margin-top:.4rem;">';
-      html += '+ CHF ' + upsellTotal.toFixed(2) + ' Add-ons';
-      html += ' = <strong style="color:var(--color-primary);">CHF ' + (roomTotal + upsellTotal).toFixed(2) + '</strong>';
+      html += '+ CHF ' + (upsellCents / 100).toFixed(2) + ' Add-ons';
+      html += ' = <strong style="color:var(--color-primary);">CHF ' + (combinedCents / 100).toFixed(2) + '</strong>';
       html += '</div>';
     }
     display.innerHTML = html;
@@ -937,7 +947,7 @@ if (confirmBtn) {
     confirmBtn.textContent = window.t ? window.t('booking.processing') : 'Wird verarbeitet...';
 
     var discountedTotal = getDiscountedTotal();
-    var roomTotal = discountedTotal ? discountedTotal.amount : (selectedOffer.totalGrossAmount ? selectedOffer.totalGrossAmount.amount : 0);
+    var roomCents = discountedTotal ? Math.round(discountedTotal.amount * 100) : (selectedOffer.totalGrossAmount ? Math.round(selectedOffer.totalGrossAmount.amount * 100) : 0);
 
     var commentParts = ['Booked via chaletswiss.ch'];
     if (appliedPromo) commentParts.push('Promo: ' + appliedPromo.code + ' (' + appliedPromo.label + ' off)');
@@ -948,9 +958,12 @@ if (confirmBtn) {
     var bookingNights = getBookingNights();
     Object.keys(selectedUpsells).forEach(function (id) {
       var item = selectedUpsells[id];
-      var totalPrice = Math.round((item.perDay ? item.price * bookingNights : item.price) * 100) / 100;
-      upsellsList.push({ id: item.id, name: item.nameFallback, price: totalPrice, unitPrice: item.price, perDay: !!item.perDay, nights: item.perDay ? bookingNights : 1 });
+      var priceCents = Math.round(item.price * 100);
+      var totalCents = item.perDay ? priceCents * bookingNights : priceCents;
+      upsellsList.push({ id: item.id, name: item.nameFallback, price: totalCents / 100, unitPrice: item.price, perDay: !!item.perDay, nights: item.perDay ? bookingNights : 1 });
     });
+
+    var upsellCents = Math.round(getUpsellTotal() * 100);
 
     var payload = {
       propertyId: PROPERTY_ID,
@@ -958,7 +971,7 @@ if (confirmBtn) {
       arrival: searchParams.arrival,
       departure: searchParams.departure,
       adults: parseInt(searchParams.adults),
-      totalAmount: Math.round((roomTotal + getUpsellTotal()) * 100) / 100,
+      totalAmount: (roomCents + upsellCents) / 100,
       upsells: upsellsList,
       currency: selectedOffer.totalGrossAmount ? selectedOffer.totalGrossAmount.currency : 'CHF',
       booker: {
@@ -1154,9 +1167,10 @@ function showPaymentStep(confirmationId, paymentLink, email, bookingData) {
   var totalText = '';
   if (selectedOffer && selectedOffer.totalGrossAmount) {
     var discTotal = getDiscountedTotal();
-    var roomAmt = discTotal ? discTotal.amount : selectedOffer.totalGrossAmount.amount;
-    var fullTotal = roomAmt + getUpsellTotal();
-    totalText = (selectedOffer.totalGrossAmount.currency || 'CHF') + ' ' + fullTotal.toFixed(2);
+    var roomCents = discTotal ? Math.round(discTotal.amount * 100) : Math.round(selectedOffer.totalGrossAmount.amount * 100);
+    var upsellCents = Math.round(getUpsellTotal() * 100);
+    var fullCents = roomCents + upsellCents;
+    totalText = (selectedOffer.totalGrossAmount.currency || 'CHF') + ' ' + (fullCents / 100).toFixed(2);
   }
 
   var html = '';
@@ -1214,9 +1228,10 @@ function showPaymentRetry(confirmationId, email, bookingData) {
   var totalText = '';
   if (selectedOffer && selectedOffer.totalGrossAmount) {
     var discTotal = getDiscountedTotal();
-    var roomAmt = discTotal ? discTotal.amount : selectedOffer.totalGrossAmount.amount;
-    var fullTotal = roomAmt + getUpsellTotal();
-    totalText = (selectedOffer.totalGrossAmount.currency || 'CHF') + ' ' + fullTotal.toFixed(2);
+    var roomCents = discTotal ? Math.round(discTotal.amount * 100) : Math.round(selectedOffer.totalGrossAmount.amount * 100);
+    var upsellCents = Math.round(getUpsellTotal() * 100);
+    var fullCents = roomCents + upsellCents;
+    totalText = (selectedOffer.totalGrossAmount.currency || 'CHF') + ' ' + (fullCents / 100).toFixed(2);
   }
 
   var html = '';
@@ -1255,8 +1270,9 @@ function showPaymentRetry(confirmationId, email, bookingData) {
         totalAmount: (function () {
           if (!selectedOffer || !selectedOffer.totalGrossAmount) return 0;
           var disc = getDiscountedTotal();
-          var room = disc ? disc.amount : selectedOffer.totalGrossAmount.amount;
-          return room + getUpsellTotal();
+          var roomCents = disc ? Math.round(disc.amount * 100) : Math.round(selectedOffer.totalGrossAmount.amount * 100);
+          var upsellCents = Math.round(getUpsellTotal() * 100);
+          return (roomCents + upsellCents) / 100;
         })(),
         currency: selectedOffer && selectedOffer.totalGrossAmount ? selectedOffer.totalGrossAmount.currency : 'CHF',
       };
