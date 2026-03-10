@@ -842,9 +842,9 @@ function getUpsellTotal() {
   var nights = getBookingNights();
   Object.keys(selectedUpsells).forEach(function (id) {
     var item = selectedUpsells[id];
-    total += item.perDay ? item.price * nights : item.price;
+    total += item.perDay ? Math.round(item.price * nights * 100) / 100 : Math.round(item.price * 100) / 100;
   });
-  return total;
+  return Math.round(total * 100) / 100;
 }
 
 function getUpsellComment() {
@@ -948,7 +948,7 @@ if (confirmBtn) {
     var bookingNights = getBookingNights();
     Object.keys(selectedUpsells).forEach(function (id) {
       var item = selectedUpsells[id];
-      var totalPrice = item.perDay ? item.price * bookingNights : item.price;
+      var totalPrice = Math.round((item.perDay ? item.price * bookingNights : item.price) * 100) / 100;
       upsellsList.push({ id: item.id, name: item.nameFallback, price: totalPrice, unitPrice: item.price, perDay: !!item.perDay, nights: item.perDay ? bookingNights : 1 });
     });
 
@@ -958,7 +958,7 @@ if (confirmBtn) {
       arrival: searchParams.arrival,
       departure: searchParams.departure,
       adults: parseInt(searchParams.adults),
-      totalAmount: roomTotal + getUpsellTotal(),
+      totalAmount: Math.round((roomTotal + getUpsellTotal()) * 100) / 100,
       upsells: upsellsList,
       currency: selectedOffer.totalGrossAmount ? selectedOffer.totalGrossAmount.currency : 'CHF',
       booker: {
