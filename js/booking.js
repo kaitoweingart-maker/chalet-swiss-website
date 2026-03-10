@@ -16,11 +16,18 @@ var appliedPromo = null;
 
 // Upsell add-ons configuration
 var UPSELL_ITEMS = [
-  { id: 'wine_red', icon: '\uD83C\uDF77', nameKey: 'booking.upsell_wine_red', descKey: 'booking.upsell_wine_red_desc', nameFallback: 'Rotwein (Flasche)', descFallback: 'Ausgewählter Schweizer Rotwein', price: 35 },
-  { id: 'wine_white', icon: '\uD83E\uDD42', nameKey: 'booking.upsell_wine_white', descKey: 'booking.upsell_wine_white_desc', nameFallback: 'Weisswein (Flasche)', descFallback: 'Frischer Schweizer Weisswein', price: 35 },
-  { id: 'beer', icon: '\uD83C\uDF7A', nameKey: 'booking.upsell_beer', descKey: 'booking.upsell_beer_desc', nameFallback: 'Bier Auswahl (6er)', descFallback: 'Lokale & Schweizer Bierspezialitäten', price: 29 },
-  { id: 'roses_champagne', icon: '\uD83C\uDF39', nameKey: 'booking.upsell_roses_champagne', descKey: 'booking.upsell_roses_champagne_desc', nameFallback: 'Rosen & Champagner', descFallback: 'Rosenstrauss mit Champagner — bereit im Zimmer', price: 89 },
-  { id: 'fondue', icon: '\uD83E\uDDC0', nameKey: 'booking.upsell_fondue', descKey: 'booking.upsell_fondue_desc', nameFallback: 'Fondue für 2', descFallback: 'Käsefondue am Abend Ihrer Ankunft', price: 49.90 },
+  { id: 'wine_red', icon: '\uD83C\uDF77', nameKey: 'booking.upsell_wine_red', descKey: 'booking.upsell_wine_red_desc', nameFallback: 'Rotwein (Flasche)', descFallback: 'Ausgewählter Schweizer Rotwein', price: 49.90 },
+  { id: 'wine_white', icon: '\uD83E\uDD42', nameKey: 'booking.upsell_wine_white', descKey: 'booking.upsell_wine_white_desc', nameFallback: 'Weisswein (Flasche)', descFallback: 'Frischer Schweizer Weisswein', price: 49.90 },
+  { id: 'beer', icon: '\uD83C\uDF7A', nameKey: 'booking.upsell_beer', descKey: 'booking.upsell_beer_desc', nameFallback: 'Bier (regional)', descFallback: 'Regionales Bier aus der Region', price: 6.90 },
+  { id: 'roses_champagne', icon: '\uD83C\uDF39', nameKey: 'booking.upsell_roses_champagne', descKey: 'booking.upsell_roses_champagne_desc', nameFallback: 'Rosen & Champagner', descFallback: 'Rosenstrauss mit Champagner — bereit im Zimmer', price: 99.90 },
+  { id: 'fondue_1', icon: '\uD83E\uDDC0', nameKey: 'booking.upsell_fondue_1', descKey: 'booking.upsell_fondue_1_desc', nameFallback: 'Fondue für 1', descFallback: 'Käsefondue für eine Person', price: 26.90 },
+  { id: 'fondue_2', icon: '\uD83E\uDDC0', nameKey: 'booking.upsell_fondue_2', descKey: 'booking.upsell_fondue_2_desc', nameFallback: 'Fondue für 2', descFallback: 'Käsefondue für zwei Personen', price: 49.90 },
+  { id: 'fondue_2_wine', icon: '\uD83C\uDF77', nameKey: 'booking.upsell_fondue_2_wine', descKey: 'booking.upsell_fondue_2_wine_desc', nameFallback: 'Fondue für 2 mit Wein', descFallback: 'Käsefondue für zwei inkl. Flasche Wein', price: 99.90 },
+  { id: 'raclette_1', icon: '\uD83E\uDDC0', nameKey: 'booking.upsell_raclette_1', descKey: 'booking.upsell_raclette_1_desc', nameFallback: 'Raclette für 1', descFallback: 'Original Walliser Raclette für eine Person', price: 23.90 },
+  { id: 'towels', icon: '\uD83D\uDEC1', nameKey: 'booking.upsell_towels', descKey: 'booking.upsell_towels_desc', nameFallback: 'Extra Handtücher', descFallback: 'Pro Nacht / Stück', price: 5 },
+  { id: 'blankets', icon: '\uD83D\uDECF\uFE0F', nameKey: 'booking.upsell_blankets', descKey: 'booking.upsell_blankets_desc', nameFallback: 'Extra Decke & Kissen', descFallback: 'Pro Nacht / Stück', price: 10 },
+  { id: 'locker', icon: '\uD83D\uDD12', nameKey: 'booking.upsell_locker', descKey: 'booking.upsell_locker_desc', nameFallback: 'Schliessfach', descFallback: 'Pro Tag', price: 5 },
+  { id: 'parking', icon: '\uD83C\uDD7F\uFE0F', nameKey: 'booking.upsell_parking', descKey: 'booking.upsell_parking_desc', nameFallback: 'Parkplatz', descFallback: 'Pro Tag', price: 5 },
 ];
 var selectedUpsells = {};
 
@@ -791,7 +798,7 @@ function renderUpsells() {
     html += '<div class="upsell-card-name">' + escapeHtml(name) + '</div>';
     html += '<div class="upsell-card-desc">' + escapeHtml(desc) + '</div>';
     html += '</div>';
-    html += '<span class="upsell-card-price">CHF ' + item.price.toFixed(0) + '</span>';
+    html += '<span class="upsell-card-price">CHF ' + item.price.toFixed(2) + '</span>';
     html += '<div class="upsell-card-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>';
     html += '</div>';
   });
