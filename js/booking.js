@@ -733,8 +733,8 @@ function renderOfferCard(offer, categoryClass, index, isBestPrice) {
   var total = offer.totalGrossAmount || {};
   var perNight = offer.averagePerNight || {};
   var currency = 'CHF';
-  var totalAmount = total.amount ? total.amount.toFixed(0) : '\u2014';
-  var perNightAmount = perNight.amount ? perNight.amount.toFixed(0) : '\u2014';
+  var totalAmount = total.amount ? total.amount.toFixed(2) : '\u2014';
+  var perNightAmount = perNight.amount ? perNight.amount.toFixed(2) : '\u2014';
 
   var html = '<div class="offer-card' + (isBestPrice ? ' best-price' : '') + '" data-index="' + index + '" tabindex="0" role="button" aria-label="' + escapeHtml(offer.unitGroupName || '') + '">';
   html += '<div class="offer-card-top">';
