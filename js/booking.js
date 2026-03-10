@@ -10,7 +10,6 @@ var searchParams = {};
 
 // Promo code configuration
 var PROMO_CODES = {
-  'DM23102901TEST100BBPR': { discount: 1.0, label: '100%' },
 };
 var appliedPromo = null;
 
