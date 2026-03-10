@@ -189,6 +189,7 @@
     "total": "total",
     "per_night": "/ Nacht",
     "per_day": "Tag",
+    "includes_addons": "Inkl. Add-ons im Wert von",
     "only_left": "Nur noch {n} verfügbar!",
     "available": "{n} verfügbar",
     "free_cancellation": "Kostenlose Stornierung",
