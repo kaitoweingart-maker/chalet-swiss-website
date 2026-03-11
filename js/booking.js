@@ -10,6 +10,7 @@ var searchParams = {};
 
 // Promo code configuration
 var PROMO_CODES = {
+'TESTDASHBOARD100': { discount: 1.0, label: '100%' },
 };
 var appliedPromo = null;
 
