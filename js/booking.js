@@ -8,10 +8,8 @@ var selectedOffer = null;
 var currentOffers = [];
 var searchParams = {};
 
-// Promo code configuration
-var PROMO_CODES = {
-'TESTDASHBOARD100': { discount: 1.0, label: '100%' },
-};
+// Promo codes validated server-side
+var PROMO_CODES = {};
 var appliedPromo = null;
 
 // Upsell add-ons configuration
@@ -868,24 +866,38 @@ function getUpsellComment() {
   return items.length > 0 ? ' | Add-ons: ' + items.join(', ') : '';
 }
 
-// Promo code functions
+// Promo code functions — validated server-side
 function applyPromoCode() {
   var input = document.getElementById('promoCodeInput');
   var msg = document.getElementById('promoMessage');
   if (!input || !msg) return;
   var code = input.value.trim().toUpperCase();
   if (!code) { msg.textContent = window.t ? window.t('booking.promo_enter') : 'Bitte geben Sie einen Promo-Code ein.'; msg.style.color = 'var(--color-error)'; return; }
-  if (PROMO_CODES[code]) {
-    appliedPromo = { code: code, discount: PROMO_CODES[code].discount, label: PROMO_CODES[code].label };
-    msg.textContent = (window.t ? window.t('booking.promo_applied') : 'Promo-Code eingelöst!') + ' -' + PROMO_CODES[code].label;
-    msg.style.color = '#059669';
+  msg.textContent = window.t ? window.t('booking.promo_checking') : 'Wird geprüft...';
+  msg.style.color = 'var(--color-text-muted)';
+  fetch(API_BASE + '/api/validate-promo', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({code: code, propertyId: PROPERTY_ID}),
+    mode: 'cors',
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (data.valid) {
+      appliedPromo = {code: code, discount: data.discount, label: data.label};
+      msg.textContent = (window.t ? window.t('booking.promo_applied') : 'Promo-Code eingelöst!') + ' -' + data.label;
+      msg.style.color = '#059669';
+    } else {
+      appliedPromo = null;
+      msg.textContent = window.t ? window.t('booking.promo_invalid') : 'Ungültiger Promo-Code.';
+      msg.style.color = 'var(--color-error)';
+    }
     updatePriceDisplay();
-  } else {
-    appliedPromo = null;
-    msg.textContent = window.t ? window.t('booking.promo_invalid') : 'Ungültiger Promo-Code.';
+  })
+  .catch(function() {
+    msg.textContent = window.t ? window.t('booking.error_connection') : 'Verbindungsfehler. Bitte versuchen Sie es erneut.';
     msg.style.color = 'var(--color-error)';
-    updatePriceDisplay();
-  }
+  });
 }
 
 function getDiscountedTotal() {
@@ -1224,10 +1236,14 @@ function showPaymentStep(confirmationId, paymentLink, email, bookingData) {
   if (payBtn) {
     payBtn.addEventListener('click', function () {
       // Validate payment link is from trusted domain
+      var ALLOWED_PAYMENT_HOSTS = ['eu.adyen.link', 'checkout.adyen.com', 'checkoutshopper-live.adyen.com'];
       try {
         var linkUrl = new URL(paymentLink);
         if (linkUrl.protocol !== 'https:') {
           console.error('Payment URL must be HTTPS'); return;
+        }
+        if (ALLOWED_PAYMENT_HOSTS.indexOf(linkUrl.hostname) === -1) {
+          console.error('Untrusted payment domain: ' + linkUrl.hostname); return;
         }
       } catch (e) { console.error('Invalid payment URL'); return; }
 
@@ -1249,7 +1265,11 @@ function showPaymentStep(confirmationId, paymentLink, email, bookingData) {
       var pollTimer = setInterval(function () {
         if (popup.closed) {
           clearInterval(pollTimer);
-          cancelUnpaidBooking(reservationId, confirmationId, paymentSection);
+          // Grace period: wait 10 seconds for Adyen webhook to reach Apaleo before checking
+          payBtn.textContent = window.t ? window.t('booking.checking_payment') : 'Zahlungsstatus wird überprüft...';
+          setTimeout(function () {
+            cancelUnpaidBooking(reservationId, confirmationId, paymentSection);
+          }, 10000);
         }
       }, 2000);
     });
