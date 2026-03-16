@@ -1288,11 +1288,11 @@ function showPaymentStep(confirmationId, paymentLink, email, bookingData) {
       var pollTimer = setInterval(function () {
         if (popup.closed) {
           clearInterval(pollTimer);
-          // Grace period: wait 10 seconds for Adyen webhook to reach Apaleo before checking
-          payBtn.textContent = window.t ? window.t('booking.checking_payment') : 'Zahlungsstatus wird überprüft...';
+          // Grace period: wait 20 seconds for Adyen webhook to reach Apaleo before checking
+          payBtn.textContent = window.t ? window.t('booking.checking_payment') : 'Zahlungsstatus wird \u00fcberpr\u00fcft...';
           setTimeout(function () {
             cancelUnpaidBooking(reservationId, confirmationId, paymentSection);
-          }, 10000);
+          }, 20000);
         }
       }, 2000);
     });
