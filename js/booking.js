@@ -885,6 +885,7 @@ function applyPromoCode() {
   .then(function(data) {
     if (data.valid) {
       appliedPromo = {code: code, discount: data.discount, label: data.label};
+      if (data.fixedPrice != null) appliedPromo.fixedPrice = data.fixedPrice;
       msg.textContent = (window.t ? window.t('booking.promo_applied') : 'Promo-Code eingelöst!') + ' -' + data.label;
       msg.style.color = '#059669';
     } else {
@@ -902,8 +903,13 @@ function applyPromoCode() {
 
 function getDiscountedTotal() {
   if (!selectedOffer || !selectedOffer.totalGrossAmount || !appliedPromo) return null;
-  var totalCents = Math.round(selectedOffer.totalGrossAmount.amount * 100);
-  totalCents = Math.round(totalCents * (1 - appliedPromo.discount));
+  var totalCents;
+  if (appliedPromo.fixedPrice != null) {
+    totalCents = Math.round(appliedPromo.fixedPrice * 100);
+  } else {
+    totalCents = Math.round(selectedOffer.totalGrossAmount.amount * 100);
+    totalCents = Math.round(totalCents * (1 - appliedPromo.discount));
+  }
   return { amount: totalCents / 100, currency: selectedOffer.totalGrossAmount.currency };
 }
 
@@ -917,7 +923,7 @@ function updatePriceDisplay() {
     var origCents = Math.round(orig.amount * 100);
     var fullOrigCents = origCents + upsellCents;
     if (appliedPromo) {
-      var discCents = Math.round(fullOrigCents * (1 - appliedPromo.discount));
+      var discCents = appliedPromo.fixedPrice != null ? Math.round(appliedPromo.fixedPrice * 100) : Math.round(fullOrigCents * (1 - appliedPromo.discount));
       html += '<span style="text-decoration:line-through;color:var(--color-text-muted);font-size:.9rem;">' + orig.currency + ' ' + (fullOrigCents / 100).toFixed(2) + '</span> ';
       html += '<span style="color:#059669;font-weight:700;font-size:1.1rem;">' + orig.currency + ' ' + (discCents / 100).toFixed(2) + '</span>';
     }
@@ -992,7 +998,13 @@ if (confirmBtn) {
 
     var upsellCents = Math.round(getUpsellTotal() * 100);
     var fullCents = roomCents + upsellCents;
-    if (appliedPromo) fullCents = Math.round(fullCents * (1 - appliedPromo.discount));
+    if (appliedPromo) {
+      if (appliedPromo.fixedPrice != null) {
+        fullCents = Math.round(appliedPromo.fixedPrice * 100);
+      } else {
+        fullCents = Math.round(fullCents * (1 - appliedPromo.discount));
+      }
+    }
 
     var payload = {
       propertyId: PROPERTY_ID,
@@ -1191,8 +1203,8 @@ function resetBookingFlow() {
 function showPaymentStep(confirmationId, paymentLink, email, bookingData) {
   if (bookingStatus) bookingStatus.style.display = 'none';
   var paymentSection = getOrCreatePaymentSection();
-  var paymentMsg = window.t ? window.t('booking.payment_instruction') : 'Die Zahlung ist erforderlich, um Ihre Reservierung zu bestätigen.';
-  var payBtnText = window.t ? window.t('booking.pay_now') : 'Jetzt bezahlen — Sichere Zahlung';
+  var paymentMsg = window.t ? window.t('booking.payment_instruction') : 'Bitte schliessen Sie jetzt Ihre Zahlung ab, um die Reservierung zu bestätigen. Klicken Sie auf den Button unten.';
+  var payBtnText = window.t ? window.t('booking.pay_now') : 'Jetzt Zahlung abschliessen';
   var reservationId = bookingData.reservationId || '';
 
   var totalText = '';
@@ -1200,7 +1212,10 @@ function showPaymentStep(confirmationId, paymentLink, email, bookingData) {
     var roomCents = Math.round(selectedOffer.totalGrossAmount.amount * 100);
     var upsellCents = Math.round(getUpsellTotal() * 100);
     var fullCents = roomCents + upsellCents;
-    if (appliedPromo) fullCents = Math.round(fullCents * (1 - appliedPromo.discount));
+    if (appliedPromo) {
+      if (appliedPromo.fixedPrice != null) { fullCents = Math.round(appliedPromo.fixedPrice * 100); }
+      else { fullCents = Math.round(fullCents * (1 - appliedPromo.discount)); }
+    }
     totalText = (selectedOffer.totalGrossAmount.currency || 'CHF') + ' ' + (fullCents / 100).toFixed(2);
   }
 
@@ -1214,8 +1229,10 @@ function showPaymentStep(confirmationId, paymentLink, email, bookingData) {
   html += '</div>';
 
   html += '<div class="payment-step-action">';
-  html += '<div style="display:inline-flex;align-items:center;gap:.5rem;background:#FEE2E2;color:#DC2626;padding:.5rem 1rem;border-radius:2rem;font-size:.85rem;font-weight:700;margin-bottom:1rem;">';
-  html += (window.t ? window.t('booking.payment_pending') : 'ZAHLUNG ERFORDERLICH');
+  html += '<p style="font-size:.8rem;color:var(--color-text-muted);margin-bottom:.5rem;font-weight:600;letter-spacing:.5px;">' + (window.t ? window.t('booking.payment_step_indicator') : 'Schritt 2 von 2 — Zahlung') + '</p>';
+  html += '<div style="display:inline-flex;align-items:center;gap:.5rem;background:#FEF3C7;color:#92400E;padding:.5rem 1rem;border-radius:2rem;font-size:.85rem;font-weight:700;margin-bottom:1rem;">';
+  html += '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg> ';
+  html += (window.t ? window.t('booking.payment_pending') : 'NÄCHSTER SCHRITT: ZAHLUNG');
   html += '</div>';
   html += '<p style="font-weight:500;color:var(--color-text);margin-bottom:.75rem;">' + escapeHtml(paymentMsg) + '</p>';
   if (totalText) {
@@ -1225,7 +1242,7 @@ function showPaymentStep(confirmationId, paymentLink, email, bookingData) {
   html += '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg> ';
   html += escapeHtml(payBtnText);
   html += '</button>';
-  html += '<p style="font-size:.82rem;color:var(--color-text-muted);margin-top:1rem;">' + (window.t ? window.t('booking.payment_secure_note') : 'Sichere Zahlung über Adyen.') + '</p>';
+  html += '<p style="font-size:.82rem;color:var(--color-text-muted);margin-top:1rem;">' + (window.t ? window.t('booking.payment_secure_note') : 'Es öffnet sich ein sicheres Zahlungsfenster. Bitte schliessen Sie die Zahlung dort ab.') + '</p>';
   html += '</div>';
 
   paymentSection.innerHTML = html;
@@ -1285,7 +1302,10 @@ function showPaymentRetry(confirmationId, email, bookingData) {
     var roomCents = Math.round(selectedOffer.totalGrossAmount.amount * 100);
     var upsellCents = Math.round(getUpsellTotal() * 100);
     var fullCents = roomCents + upsellCents;
-    if (appliedPromo) fullCents = Math.round(fullCents * (1 - appliedPromo.discount));
+    if (appliedPromo) {
+      if (appliedPromo.fixedPrice != null) { fullCents = Math.round(appliedPromo.fixedPrice * 100); }
+      else { fullCents = Math.round(fullCents * (1 - appliedPromo.discount)); }
+    }
     totalText = (selectedOffer.totalGrossAmount.currency || 'CHF') + ' ' + (fullCents / 100).toFixed(2);
   }
 
@@ -1327,7 +1347,10 @@ function showPaymentRetry(confirmationId, email, bookingData) {
           var roomCents = Math.round(selectedOffer.totalGrossAmount.amount * 100);
           var upsellCents = Math.round(getUpsellTotal() * 100);
           var fullCents = roomCents + upsellCents;
-          if (appliedPromo) fullCents = Math.round(fullCents * (1 - appliedPromo.discount));
+          if (appliedPromo) {
+            if (appliedPromo.fixedPrice != null) { fullCents = Math.round(appliedPromo.fixedPrice * 100); }
+            else { fullCents = Math.round(fullCents * (1 - appliedPromo.discount)); }
+          }
           return fullCents / 100;
         })(),
         currency: selectedOffer && selectedOffer.totalGrossAmount ? selectedOffer.totalGrossAmount.currency : 'CHF',
