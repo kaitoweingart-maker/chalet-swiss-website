@@ -1220,6 +1220,15 @@ function showPaymentStep(confirmationId, paymentLink, email, bookingData) {
   }
 
   var html = '';
+  // Warning banner: booking NOT confirmed
+  html += '<div style="background:#FEE2E2;border:2px solid #DC2626;border-radius:12px;padding:1rem 1.25rem;margin-bottom:1rem;text-align:center;">';
+  html += '<p style="color:#DC2626;font-weight:800;font-size:1.05rem;margin:0;">';
+  html += '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2.5" style="vertical-align:middle;margin-right:.4rem;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';
+  html += (window.t ? window.t('booking.not_confirmed_yet') : 'Ihre Buchung ist noch NICHT best\u00e4tigt!');
+  html += '</p>';
+  html += '<p style="color:#991B1B;font-size:.85rem;margin:.4rem 0 0;">' + (window.t ? window.t('booking.will_be_cancelled') : 'Ohne Zahlung wird Ihre Reservierung automatisch storniert.') + '</p>';
+  html += '</div>';
+  // Reservation reference
   html += '<div class="payment-step-success" style="border-left:4px solid #F59E0B;background:#FFFBEB;">';
   html += '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';
   html += '<div>';
@@ -1227,22 +1236,19 @@ function showPaymentStep(confirmationId, paymentLink, email, bookingData) {
   html += '<p style="font-size:.82rem;color:#B45309;margin-top:.25rem;">' + escapeHtml(email) + '</p>';
   html += '</div>';
   html += '</div>';
-
+  // Payment action area
   html += '<div class="payment-step-action">';
-  html += '<p style="font-size:.8rem;color:var(--color-text-muted);margin-bottom:.5rem;font-weight:600;letter-spacing:.5px;">' + (window.t ? window.t('booking.payment_step_indicator') : 'Schritt 2 von 2 — Zahlung') + '</p>';
-  html += '<div style="display:inline-flex;align-items:center;gap:.5rem;background:#FEF3C7;color:#92400E;padding:.5rem 1rem;border-radius:2rem;font-size:.85rem;font-weight:700;margin-bottom:1rem;">';
-  html += '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg> ';
-  html += (window.t ? window.t('booking.payment_pending') : 'NÄCHSTER SCHRITT: ZAHLUNG');
-  html += '</div>';
-  html += '<p style="font-weight:500;color:var(--color-text);margin-bottom:.75rem;">' + escapeHtml(paymentMsg) + '</p>';
+  html += '<p style="font-size:.8rem;color:var(--color-text-muted);margin-bottom:.5rem;font-weight:600;letter-spacing:.5px;">' + (window.t ? window.t('booking.payment_step_indicator') : 'Schritt 2 von 2 \u2014 Zahlung') + '</p>';
+  html += '<p style="font-weight:600;color:var(--color-text);margin-bottom:.75rem;font-size:1.05rem;">' + escapeHtml(paymentMsg) + '</p>';
   if (totalText) {
     html += '<p style="font-size:1.8rem;font-weight:800;color:var(--color-primary);font-family:var(--font-heading);margin:.75rem 0;">' + escapeHtml(totalText) + '</p>';
   }
-  html += '<button id="payNowBtn" class="btn btn-accent btn-lg payment-btn" style="font-size:1rem;padding:.85rem 1.5rem;font-weight:700;max-width:100%;white-space:normal;word-wrap:break-word;">';
+  html += '<style>@keyframes pulse-pay{0%,100%{transform:scale(1)}50%{transform:scale(1.03)}}</style>';
+  html += '<button id="payNowBtn" class="btn btn-accent btn-lg payment-btn" style="font-size:1.05rem;padding:1rem 1.5rem;font-weight:700;max-width:100%;white-space:normal;word-wrap:break-word;animation:pulse-pay 2s ease-in-out infinite;box-shadow:0 4px 14px rgba(0,0,0,.15);">';
   html += '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg> ';
   html += escapeHtml(payBtnText);
   html += '</button>';
-  html += '<p style="font-size:.82rem;color:var(--color-text-muted);margin-top:1rem;">' + (window.t ? window.t('booking.payment_secure_note') : 'Es öffnet sich ein sicheres Zahlungsfenster. Bitte schliessen Sie die Zahlung dort ab.') + '</p>';
+  html += '<p style="font-size:.82rem;color:var(--color-text-muted);margin-top:1rem;">' + (window.t ? window.t('booking.payment_secure_note') : 'Es \u00f6ffnet sich ein sicheres Zahlungsfenster. Bitte schliessen Sie die Zahlung dort ab.') + '</p>';
   html += '</div>';
 
   paymentSection.innerHTML = html;
