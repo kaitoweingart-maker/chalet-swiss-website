@@ -1224,9 +1224,9 @@ function showPaymentStep(confirmationId, paymentLink, email, bookingData) {
   html += '<div style="background:#FEE2E2;border:2px solid #DC2626;border-radius:12px;padding:1rem 1.25rem;margin-bottom:1rem;text-align:center;">';
   html += '<p style="color:#DC2626;font-weight:800;font-size:1.05rem;margin:0;">';
   html += '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2.5" style="vertical-align:middle;margin-right:.4rem;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';
-  html += (window.t ? window.t('booking.not_confirmed_yet') : 'Ihre Buchung ist noch NICHT best\u00e4tigt!');
+  html += 'Du hast noch keine g\u00fcltige Buchung!';
   html += '</p>';
-  html += '<p style="color:#991B1B;font-size:.85rem;margin:.4rem 0 0;">' + (window.t ? window.t('booking.will_be_cancelled') : 'Ohne Zahlung wird Ihre Reservierung automatisch storniert.') + '</p>';
+  html += '<p style="color:#991B1B;font-size:.85rem;margin:.4rem 0 0;">Ohne Zahlung wird die Buchung in 10 Minuten storniert.</p>';
   html += '</div>';
   // Reservation reference
   html += '<div class="payment-step-success" style="border-left:4px solid #F59E0B;background:#FFFBEB;">';
