@@ -225,6 +225,7 @@
     "pay_now": "Jetzt Zahlung abschliessen",
     "payment_secure_note": "Es öffnet sich ein sicheres Zahlungsfenster. Bitte schliessen Sie die Zahlung dort ab.",
     "waiting_for_payment": "Warte auf Zahlung...",
+    "checking_payment": "Zahlungsstatus wird gepr\u00fcft...",
     "cancelled_title": "Reservierung storniert",
     "cancelled_no_payment": "Zahlung nicht abgeschlossen. Ihre Reservierung wurde storniert.",
     "cancelled_rebook": "Sie können jederzeit eine neue Reservierung vornehmen.",

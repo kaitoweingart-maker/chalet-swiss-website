@@ -225,6 +225,7 @@
     "pay_now": "Complete Payment Now",
     "payment_secure_note": "A secure payment window will open. Please complete the payment there.",
     "waiting_for_payment": "Waiting for payment...",
+    "checking_payment": "Checking payment status...",
     "cancelled_title": "Reservation Cancelled",
     "cancelled_no_payment": "Payment was not completed. Your reservation has been cancelled.",
     "cancelled_rebook": "You can make a new reservation at any time.",
