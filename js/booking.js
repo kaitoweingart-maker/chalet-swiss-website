@@ -4,6 +4,14 @@
 var API_BASE = window.CHALETSWISS_API_BASE || 'https://amanthos-website-api.onrender.com';
 var PROPERTY_ID = 'HCSI';
 
+// dataLayer helper for GTM conversion tracking
+window.dataLayer = window.dataLayer || [];
+function gtmPush(event, data) {
+  var obj = { event: event };
+  if (data) { var k = Object.keys(data); for (var i = 0; i < k.length; i++) { obj[k[i]] = data[k[i]]; } }
+  window.dataLayer.push(obj);
+}
+
 var selectedOffer = null;
 var currentOffers = [];
 var searchParams = {};
@@ -579,6 +587,12 @@ if (searchBtn) {
       adults: guestsVal,
       children: childrenVal,
     };
+    gtmPush('search_availability', {
+      location: 'Hotel Chalet Swiss',
+      check_in: checkinVal,
+      check_out: checkoutVal,
+      guests: guestsVal,
+    });
     fetchOffers();
   });
 }
@@ -633,6 +647,10 @@ function fetchOffers() {
   .then(function (data) {
     offersLoading.style.display = 'none';
     currentOffers = data.offers || [];
+    gtmPush('view_offers', {
+      location: 'Hotel Chalet Swiss',
+      offer_count: currentOffers.length,
+    });
     if (currentOffers.length === 0) {
       offersGrid.innerHTML = '<div class="no-offers"><p>' + (window.t ? window.t('booking.no_offers') : 'Keine Verfügbarkeit für die gewählten Daten. Bitte versuchen Sie andere Daten.') + '</p></div>';
       return;
@@ -641,6 +659,7 @@ function fetchOffers() {
   })
   .catch(function (err) {
     offersLoading.style.display = 'none';
+    gtmPush('booking_error', { error_message: err.message || 'Unknown error', step: 'fetch_offers' });
     var msg = window.t ? window.t('booking.unable_to_check') : 'Verfügbarkeit kann momentan nicht geprüft werden.';
     if (err.message && err.message.indexOf('Failed to fetch') !== -1) {
       msg = window.t ? window.t('booking.server_waking') : 'Unser Buchungsserver startet gerade (~30 Sekunden beim ersten Laden). Bitte klicken Sie gleich nochmal auf "Suchen".';
@@ -763,6 +782,13 @@ function renderOfferCard(offer, categoryClass, index, isBestPrice) {
 function selectOffer(index) {
   selectedOffer = currentOffers[index];
   if (!selectedOffer || !guestForm) return;
+
+  gtmPush('select_offer', {
+    rate_name: selectedOffer.ratePlanName || '',
+    category: selectedOffer.category || '',
+    total_price: selectedOffer.totalGrossAmount ? selectedOffer.totalGrossAmount.amount : 0,
+    currency: selectedOffer.totalGrossAmount ? selectedOffer.totalGrossAmount.currency : 'CHF',
+  });
 
   offersGrid.querySelectorAll('.offer-card').forEach(function (card) {
     card.classList.toggle('selected', parseInt(card.getAttribute('data-index')) === index);
@@ -888,6 +914,7 @@ function applyPromoCode() {
       if (data.fixedPrice != null) appliedPromo.fixedPrice = data.fixedPrice;
       msg.textContent = (window.t ? window.t('booking.promo_applied') : 'Promo-Code eingelöst!') + ' -' + data.label;
       msg.style.color = '#059669';
+      gtmPush('promo_code_applied', { promo_code: code, discount: data.label });
     } else {
       appliedPromo = null;
       msg.textContent = window.t ? window.t('booking.promo_invalid') : 'Ungültiger Promo-Code.';
@@ -964,6 +991,12 @@ if (confirmBtn) {
       return;
     }
 
+    gtmPush('submit_booking', {
+      location: 'Hotel Chalet Swiss',
+      rate_name: selectedOffer.ratePlanName || '',
+      promo_code: appliedPromo ? appliedPromo.code : '',
+    });
+
     confirmBtn.disabled = true;
     confirmBtn.innerHTML = '<span class="spinner-inline"></span> ' + (window.t ? window.t('booking.processing') : 'Wird verarbeitet...');
     // Show progress updates
@@ -1037,6 +1070,15 @@ if (confirmBtn) {
       confirmBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> ' + (window.t ? window.t('booking.confirm_reservation') : 'Reservierung bestätigen');
 
       if (data.success) {
+        var finalTotal = fullCents / 100;
+        gtmPush('booking_confirmed', {
+          booking_id: data.confirmationId || '',
+          reservation_id: data.reservationId || '',
+          total_price: finalTotal,
+          currency: selectedOffer.totalGrossAmount ? selectedOffer.totalGrossAmount.currency : 'CHF',
+          promo_code: appliedPromo ? appliedPromo.code : '',
+        });
+
         guestForm.querySelector('.form-grid').style.display = 'none';
         guestForm.querySelector('.form-actions').style.display = 'none';
         var promoSection = guestForm.querySelector('.promo-code-section');
@@ -1050,6 +1092,7 @@ if (confirmBtn) {
           showPaymentRetry(data.confirmationId, email, data);
         }
       } else {
+        gtmPush('booking_error', { error_message: data.error || 'Booking failed', step: 'confirm_booking' });
         showStatus('error', data.error || (window.t ? window.t('booking.error_booking_failed') : 'Buchung fehlgeschlagen. Bitte versuchen Sie es erneut oder kontaktieren Sie uns.'));
       }
     })
@@ -1154,6 +1197,7 @@ function pollPaymentStatus(reservationId, bookingId, paymentSection, confirmatio
       html += '</div>';
       html += '</div>';
       paymentSection.innerHTML = html;
+      gtmPush('payment_completed', { booking_id: bookingId });
     } else if (attempt < maxAttempts - 1) {
       setTimeout(function () {
         pollPaymentStatus(reservationId, bookingId, paymentSection, confirmationId, attempt + 1);
@@ -1240,6 +1284,7 @@ function cancelUnpaidBooking(reservationId, bookingId, paymentSection) {
           resetBookingFlow();
         });
       }
+      gtmPush('booking_cancelled_no_payment', { booking_id: bookingId, reservation_id: reservationId });
     } else if (data.reason === 'paid') {
       var html2 = '';
       html2 += '<div class="payment-step-success" style="border-left:4px solid #059669;background:#ECFDF5;">';
@@ -1250,6 +1295,7 @@ function cancelUnpaidBooking(reservationId, bookingId, paymentSection) {
       html2 += '</div>';
       html2 += '</div>';
       paymentSection.innerHTML = html2;
+      gtmPush('payment_completed', { booking_id: bookingId });
     }
   })
   .catch(function (err) {
@@ -1286,6 +1332,7 @@ function resetBookingFlow() {
 }
 
 function showPaymentStep(confirmationId, paymentLink, email, bookingData) {
+  gtmPush('payment_initiated', { booking_id: confirmationId });
   if (bookingStatus) bookingStatus.style.display = 'none';
   var paymentSection = getOrCreatePaymentSection();
   var paymentMsg = window.t ? window.t('booking.payment_instruction') : 'Bitte schliessen Sie jetzt Ihre Zahlung ab, um die Reservierung zu bestätigen. Klicken Sie auf den Button unten.';
