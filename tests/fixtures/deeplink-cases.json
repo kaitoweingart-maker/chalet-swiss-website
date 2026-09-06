@@ -1,0 +1,1332 @@
+[
+  {
+    "name": "fbl_klick_hcsi",
+    "query": "?property=HCSI&arrival=2026-10-10&departure=2026-10-12&adults=2&children=0&lang=en&utm_source=google&utm_medium=organic&utm_campaign=hotel-fbl",
+    "today": "2026-09-06",
+    "site": {
+      "properties": {
+        "HCSI": 4
+      },
+      "langs": [
+        "de",
+        "en"
+      ],
+      "defaultProperty": "HCSI"
+    },
+    "expect": {
+      "search": {
+        "property": "HCSI",
+        "arrival": "2026-10-10",
+        "departure": "2026-10-12",
+        "adults": 2,
+        "children": 0,
+        "lang": "en"
+      },
+      "preselect": null,
+      "source": "google_fbl",
+      "campaign": {
+        "utm_source": "google",
+        "utm_medium": "organic",
+        "utm_campaign": "hotel-fbl"
+      },
+      "google": null
+    }
+  },
+  {
+    "name": "ads_klick_hcsi",
+    "query": "?property=HCSI&arrival=2026-10-10&departure=2026-10-12&adults=2&children=0&lang=de&utm_source=google&utm_medium=cpc&utm_campaign=hotel-ads&gclid=EAIaIQobChMI",
+    "today": "2026-09-06",
+    "site": {
+      "properties": {
+        "HCSI": 4
+      },
+      "langs": [
+        "de",
+        "en"
+      ],
+      "defaultProperty": "HCSI"
+    },
+    "expect": {
+      "search": {
+        "property": "HCSI",
+        "arrival": "2026-10-10",
+        "departure": "2026-10-12",
+        "adults": 2,
+        "children": 0,
+        "lang": "de"
+      },
+      "preselect": null,
+      "source": "google_hotel_ads",
+      "campaign": {
+        "utm_source": "google",
+        "utm_medium": "cpc",
+        "utm_campaign": "hotel-ads"
+      },
+      "google": null
+    }
+  },
+  {
+    "name": "pruefklick_google",
+    "query": "?property=HCSI&arrival=2026-10-10&departure=2026-10-12&adults=2&children=0&gverify=true&utm_source=google&utm_medium=organic&utm_campaign=hotel-fbl",
+    "today": "2026-09-06",
+    "site": {
+      "properties": {
+        "HCSI": 4
+      },
+      "langs": [
+        "de",
+        "en"
+      ],
+      "defaultProperty": "HCSI"
+    },
+    "expect": {
+      "search": {
+        "property": "HCSI",
+        "arrival": "2026-10-10",
+        "departure": "2026-10-12",
+        "adults": 2,
+        "children": 0,
+        "lang": null
+      },
+      "preselect": null,
+      "source": "google_verify",
+      "campaign": {
+        "utm_source": "google",
+        "utm_medium": "organic",
+        "utm_campaign": "hotel-fbl"
+      },
+      "google": null
+    }
+  },
+  {
+    "name": "gverify_false_ist_fbl",
+    "query": "?arrival=2026-10-10&departure=2026-10-12&gverify=false&utm_source=google&utm_medium=organic&utm_campaign=hotel-fbl",
+    "today": "2026-09-06",
+    "site": {
+      "properties": {
+        "HCSI": 4
+      },
+      "langs": [
+        "de",
+        "en"
+      ],
+      "defaultProperty": "HCSI"
+    },
+    "expect": {
+      "search": {
+        "property": "HCSI",
+        "arrival": "2026-10-10",
+        "departure": "2026-10-12",
+        "adults": 2,
+        "children": 0,
+        "lang": null
+      },
+      "preselect": null,
+      "source": "google_fbl",
+      "campaign": {
+        "utm_source": "google",
+        "utm_medium": "organic",
+        "utm_campaign": "hotel-fbl"
+      },
+      "google": null
+    }
+  },
+  {
+    "name": "anreise_gestern",
+    "query": "?arrival=2026-09-05&departure=2026-09-07",
+    "today": "2026-09-06",
+    "site": {
+      "properties": {
+        "HCSI": 4
+      },
+      "langs": [
+        "de",
+        "en"
+      ],
+      "defaultProperty": "HCSI"
+    },
+    "expect": {
+      "search": null,
+      "preselect": null,
+      "source": null,
+      "campaign": null,
+      "google": null
+    }
+  },
+  {
+    "name": "anreise_heute_ok",
+    "query": "?arrival=2026-09-06&departure=2026-09-07",
+    "today": "2026-09-06",
+    "site": {
+      "properties": {
+        "HCSI": 4
+      },
+      "langs": [
+        "de",
+        "en"
+      ],
+      "defaultProperty": "HCSI"
+    },
+    "expect": {
+      "search": {
+        "property": "HCSI",
+        "arrival": "2026-09-06",
+        "departure": "2026-09-07",
+        "adults": 2,
+        "children": 0,
+        "lang": null
+      },
+      "preselect": null,
+      "source": null,
+      "campaign": null,
+      "google": null
+    }
+  },
+  {
+    "name": "abreise_gleich_anreise",
+    "query": "?arrival=2026-10-10&departure=2026-10-10",
+    "today": "2026-09-06",
+    "site": {
+      "properties": {
+        "HCSI": 4
+      },
+      "langs": [
+        "de",
+        "en"
+      ],
+      "defaultProperty": "HCSI"
+    },
+    "expect": {
+      "search": null,
+      "preselect": null,
+      "source": null,
+      "campaign": null,
+      "google": null
+    }
+  },
+  {
+    "name": "abreise_vor_anreise",
+    "query": "?arrival=2026-10-12&departure=2026-10-10",
+    "today": "2026-09-06",
+    "site": {
+      "properties": {
+        "HCSI": 4
+      },
+      "langs": [
+        "de",
+        "en"
+      ],
+      "defaultProperty": "HCSI"
+    },
+    "expect": {
+      "search": null,
+      "preselect": null,
+      "source": null,
+      "campaign": null,
+      "google": null
+    }
+  },
+  {
+    "name": "31_naechte",
+    "query": "?arrival=2026-10-01&departure=2026-11-01",
+    "today": "2026-09-06",
+    "site": {
+      "properties": {
+        "HCSI": 4
+      },
+      "langs": [
+        "de",
+        "en"
+      ],
+      "defaultProperty": "HCSI"
+    },
+    "expect": {
+      "search": null,
+      "preselect": null,
+      "source": null,
+      "campaign": null,
+      "google": null
+    }
+  },
+  {
+    "name": "30_naechte_ok",
+    "query": "?arrival=2026-10-01&departure=2026-10-31",
+    "today": "2026-09-06",
+    "site": {
+      "properties": {
+        "HCSI": 4
+      },
+      "langs": [
+        "de",
+        "en"
+      ],
+      "defaultProperty": "HCSI"
+    },
+    "expect": {
+      "search": {
+        "property": "HCSI",
+        "arrival": "2026-10-01",
+        "departure": "2026-10-31",
+        "adults": 2,
+        "children": 0,
+        "lang": null
+      },
+      "preselect": null,
+      "source": null,
+      "campaign": null,
+      "google": null
+    }
+  },
+  {
+    "name": "anreise_366_tage",
+    "query": "?arrival=2027-09-07&departure=2027-09-09",
+    "today": "2026-09-06",
+    "site": {
+      "properties": {
+        "HCSI": 4
+      },
+      "langs": [
+        "de",
+        "en"
+      ],
+      "defaultProperty": "HCSI"
+    },
+    "expect": {
+      "search": null,
+      "preselect": null,
+      "source": null,
+      "campaign": null,
+      "google": null
+    }
+  },
+  {
+    "name": "anreise_365_tage_ok",
+    "query": "?arrival=2027-09-06&departure=2027-09-08",
+    "today": "2026-09-06",
+    "site": {
+      "properties": {
+        "HCSI": 4
+      },
+      "langs": [
+        "de",
+        "en"
+      ],
+      "defaultProperty": "HCSI"
+    },
+    "expect": {
+      "search": {
+        "property": "HCSI",
+        "arrival": "2027-09-06",
+        "departure": "2027-09-08",
+        "adults": 2,
+        "children": 0,
+        "lang": null
+      },
+      "preselect": null,
+      "source": null,
+      "campaign": null,
+      "google": null
+    }
+  },
+  {
+    "name": "einstelliger_monat_tag",
+    "query": "?arrival=2026-9-8&departure=2026-9-9",
+    "today": "2026-09-06",
+    "site": {
+      "properties": {
+        "HCSI": 4
+      },
+      "langs": [
+        "de",
+        "en"
+      ],
+      "defaultProperty": "HCSI"
+    },
+    "expect": {
+      "search": {
+        "property": "HCSI",
+        "arrival": "2026-09-08",
+        "departure": "2026-09-09",
+        "adults": 2,
+        "children": 0,
+        "lang": null
+      },
+      "preselect": null,
+      "source": null,
+      "campaign": null,
+      "google": null
+    }
+  },
+  {
+    "name": "kein_kalenderdatum",
+    "query": "?arrival=2027-02-30&departure=2027-03-02",
+    "today": "2026-09-06",
+    "site": {
+      "properties": {
+        "HCSI": 4
+      },
+      "langs": [
+        "de",
+        "en"
+      ],
+      "defaultProperty": "HCSI"
+    },
+    "expect": {
+      "search": null,
+      "preselect": null,
+      "source": null,
+      "campaign": null,
+      "google": null
+    }
+  },
+  {
+    "name": "datum_falsches_format",
+    "query": "?arrival=10.10.2026&departure=12.10.2026",
+    "today": "2026-09-06",
+    "site": {
+      "properties": {
+        "HCSI": 4
+      },
+      "langs": [
+        "de",
+        "en"
+      ],
+      "defaultProperty": "HCSI"
+    },
+    "expect": {
+      "search": null,
+      "preselect": null,
+      "source": null,
+      "campaign": null,
+      "google": null
+    }
+  },
+  {
+    "name": "adults_9_klemmung",
+    "query": "?arrival=2026-10-10&departure=2026-10-12&adults=9",
+    "today": "2026-09-06",
+    "site": {
+      "properties": {
+        "HCSI": 4
+      },
+      "langs": [
+        "de",
+        "en"
+      ],
+      "defaultProperty": "HCSI"
+    },
+    "expect": {
+      "search": {
+        "property": "HCSI",
+        "arrival": "2026-10-10",
+        "departure": "2026-10-12",
+        "adults": 4,
+        "children": 0,
+        "lang": null
+      },
+      "preselect": null,
+      "source": null,
+      "campaign": null,
+      "google": null
+    }
+  },
+  {
+    "name": "children_ueber_rest",
+    "query": "?arrival=2026-10-10&departure=2026-10-12&adults=3&children=3",
+    "today": "2026-09-06",
+    "site": {
+      "properties": {
+        "HCSI": 4
+      },
+      "langs": [
+        "de",
+        "en"
+      ],
+      "defaultProperty": "HCSI"
+    },
+    "expect": {
+      "search": {
+        "property": "HCSI",
+        "arrival": "2026-10-10",
+        "departure": "2026-10-12",
+        "adults": 3,
+        "children": 1,
+        "lang": null
+      },
+      "preselect": null,
+      "source": null,
+      "campaign": null,
+      "google": null
+    }
+  },
+  {
+    "name": "adults_0_untergrenze",
+    "query": "?arrival=2026-10-10&departure=2026-10-12&adults=0&children=2",
+    "today": "2026-09-06",
+    "site": {
+      "properties": {
+        "HCSI": 4
+      },
+      "langs": [
+        "de",
+        "en"
+      ],
+      "defaultProperty": "HCSI"
+    },
+    "expect": {
+      "search": {
+        "property": "HCSI",
+        "arrival": "2026-10-10",
+        "departure": "2026-10-12",
+        "adults": 1,
+        "children": 2,
+        "lang": null
+      },
+      "preselect": null,
+      "source": null,
+      "campaign": null,
+      "google": null
+    }
+  },
+  {
+    "name": "adults_keine_zahl",
+    "query": "?arrival=2026-10-10&departure=2026-10-12&adults=zwei",
+    "today": "2026-09-06",
+    "site": {
+      "properties": {
+        "HCSI": 4
+      },
+      "langs": [
+        "de",
+        "en"
+      ],
+      "defaultProperty": "HCSI"
+    },
+    "expect": {
+      "search": {
+        "property": "HCSI",
+        "arrival": "2026-10-10",
+        "departure": "2026-10-12",
+        "adults": 2,
+        "children": 0,
+        "lang": null
+      },
+      "preselect": null,
+      "source": null,
+      "campaign": null,
+      "google": null
+    }
+  },
+  {
+    "name": "mulin_adults_6_ok",
+    "query": "?arrival=2026-10-10&departure=2026-10-12&adults=6",
+    "today": "2026-09-06",
+    "site": {
+      "properties": {
+        "MUBRIG": 6
+      },
+      "langs": [
+        "de",
+        "en"
+      ],
+      "defaultProperty": "MUBRIG"
+    },
+    "expect": {
+      "search": {
+        "property": "MUBRIG",
+        "arrival": "2026-10-10",
+        "departure": "2026-10-12",
+        "adults": 6,
+        "children": 0,
+        "lang": null
+      },
+      "preselect": null,
+      "source": null,
+      "campaign": null,
+      "google": null
+    }
+  },
+  {
+    "name": "mulin_adults_7_klemmung",
+    "query": "?property=MUBRIG&arrival=2026-10-10&departure=2026-10-12&adults=7&children=0",
+    "today": "2026-09-06",
+    "site": {
+      "properties": {
+        "MUBRIG": 6
+      },
+      "langs": [
+        "de",
+        "en"
+      ],
+      "defaultProperty": "MUBRIG"
+    },
+    "expect": {
+      "search": {
+        "property": "MUBRIG",
+        "arrival": "2026-10-10",
+        "departure": "2026-10-12",
+        "adults": 6,
+        "children": 0,
+        "lang": null
+      },
+      "preselect": null,
+      "source": null,
+      "campaign": null,
+      "google": null
+    }
+  },
+  {
+    "name": "lang_ko_chalet_faellt_auf_en",
+    "query": "?arrival=2026-10-10&departure=2026-10-12&lang=ko",
+    "today": "2026-09-06",
+    "site": {
+      "properties": {
+        "HCSI": 4
+      },
+      "langs": [
+        "de",
+        "en"
+      ],
+      "defaultProperty": "HCSI"
+    },
+    "expect": {
+      "search": {
+        "property": "HCSI",
+        "arrival": "2026-10-10",
+        "departure": "2026-10-12",
+        "adults": 2,
+        "children": 0,
+        "lang": "en"
+      },
+      "preselect": null,
+      "source": null,
+      "campaign": null,
+      "google": null
+    }
+  },
+  {
+    "name": "lang_DE_gross",
+    "query": "?arrival=2026-10-10&departure=2026-10-12&lang=DE",
+    "today": "2026-09-06",
+    "site": {
+      "properties": {
+        "HCSI": 4
+      },
+      "langs": [
+        "de",
+        "en"
+      ],
+      "defaultProperty": "HCSI"
+    },
+    "expect": {
+      "search": {
+        "property": "HCSI",
+        "arrival": "2026-10-10",
+        "departure": "2026-10-12",
+        "adults": 2,
+        "children": 0,
+        "lang": "de"
+      },
+      "preselect": null,
+      "source": null,
+      "campaign": null,
+      "google": null
+    }
+  },
+  {
+    "name": "lang_de_CH",
+    "query": "?arrival=2026-10-10&departure=2026-10-12&lang=de-CH",
+    "today": "2026-09-06",
+    "site": {
+      "properties": {
+        "HCSI": 4
+      },
+      "langs": [
+        "de",
+        "en"
+      ],
+      "defaultProperty": "HCSI"
+    },
+    "expect": {
+      "search": {
+        "property": "HCSI",
+        "arrival": "2026-10-10",
+        "departure": "2026-10-12",
+        "adults": 2,
+        "children": 0,
+        "lang": "de"
+      },
+      "preselect": null,
+      "source": null,
+      "campaign": null,
+      "google": null
+    }
+  },
+  {
+    "name": "lang_fehlt",
+    "query": "?arrival=2026-10-10&departure=2026-10-12",
+    "today": "2026-09-06",
+    "site": {
+      "properties": {
+        "HCSI": 4
+      },
+      "langs": [
+        "de",
+        "en"
+      ],
+      "defaultProperty": "HCSI"
+    },
+    "expect": {
+      "search": {
+        "property": "HCSI",
+        "arrival": "2026-10-10",
+        "departure": "2026-10-12",
+        "adults": 2,
+        "children": 0,
+        "lang": null
+      },
+      "preselect": null,
+      "source": null,
+      "campaign": null,
+      "google": null
+    }
+  },
+  {
+    "name": "property_fremd_chalet",
+    "query": "?property=MUBRIG&arrival=2026-10-10&departure=2026-10-12&utm_source=google&utm_medium=organic&utm_campaign=hotel-fbl",
+    "today": "2026-09-06",
+    "site": {
+      "properties": {
+        "HCSI": 4
+      },
+      "langs": [
+        "de",
+        "en"
+      ],
+      "defaultProperty": "HCSI"
+    },
+    "expect": {
+      "search": null,
+      "preselect": null,
+      "source": "google_fbl",
+      "campaign": {
+        "utm_source": "google",
+        "utm_medium": "organic",
+        "utm_campaign": "hotel-fbl"
+      },
+      "google": null
+    }
+  },
+  {
+    "name": "property_klein_chalet",
+    "query": "?property=hcsi&arrival=2026-10-10&departure=2026-10-12",
+    "today": "2026-09-06",
+    "site": {
+      "properties": {
+        "HCSI": 4
+      },
+      "langs": [
+        "de",
+        "en"
+      ],
+      "defaultProperty": "HCSI"
+    },
+    "expect": {
+      "search": {
+        "property": "HCSI",
+        "arrival": "2026-10-10",
+        "departure": "2026-10-12",
+        "adults": 2,
+        "children": 0,
+        "lang": null
+      },
+      "preselect": null,
+      "source": null,
+      "campaign": null,
+      "google": null
+    }
+  },
+  {
+    "name": "property_fehlt_living",
+    "query": "?arrival=2026-10-10&departure=2026-10-12&adults=2",
+    "today": "2026-09-06",
+    "site": {
+      "properties": {
+        "GBAL": 3,
+        "GNBE": 4,
+        "NYAL": 4
+      },
+      "langs": [
+        "de",
+        "en",
+        "fr",
+        "it",
+        "ja",
+        "ko",
+        "zh"
+      ],
+      "defaultProperty": null
+    },
+    "expect": {
+      "search": null,
+      "preselect": null,
+      "source": null,
+      "campaign": null,
+      "google": null
+    }
+  },
+  {
+    "name": "property_fremd_living",
+    "query": "?property=PRZA&arrival=2026-10-10&departure=2026-10-12&adults=2",
+    "today": "2026-09-06",
+    "site": {
+      "properties": {
+        "GBAL": 3,
+        "GNBE": 4,
+        "NYAL": 4
+      },
+      "langs": [
+        "de",
+        "en",
+        "fr",
+        "it",
+        "ja",
+        "ko",
+        "zh"
+      ],
+      "defaultProperty": null
+    },
+    "expect": {
+      "search": null,
+      "preselect": null,
+      "source": null,
+      "campaign": null,
+      "google": null
+    }
+  },
+  {
+    "name": "living_nyal_klemmung",
+    "query": "?property=NYAL&arrival=2026-10-10&departure=2026-10-12&adults=4&children=1&lang=fr",
+    "today": "2026-09-06",
+    "site": {
+      "properties": {
+        "GBAL": 3,
+        "GNBE": 4,
+        "NYAL": 4
+      },
+      "langs": [
+        "de",
+        "en",
+        "fr",
+        "it",
+        "ja",
+        "ko",
+        "zh"
+      ],
+      "defaultProperty": null
+    },
+    "expect": {
+      "search": {
+        "property": "NYAL",
+        "arrival": "2026-10-10",
+        "departure": "2026-10-12",
+        "adults": 4,
+        "children": 0,
+        "lang": "fr"
+      },
+      "preselect": null,
+      "source": null,
+      "campaign": null,
+      "google": null
+    }
+  },
+  {
+    "name": "living_gbal_max3",
+    "query": "?property=gbal&arrival=2026-10-10&departure=2026-10-12&adults=3&children=1",
+    "today": "2026-09-06",
+    "site": {
+      "properties": {
+        "GBAL": 3,
+        "GNBE": 4,
+        "NYAL": 4
+      },
+      "langs": [
+        "de",
+        "en",
+        "fr",
+        "it",
+        "ja",
+        "ko",
+        "zh"
+      ],
+      "defaultProperty": null
+    },
+    "expect": {
+      "search": {
+        "property": "GBAL",
+        "arrival": "2026-10-10",
+        "departure": "2026-10-12",
+        "adults": 3,
+        "children": 0,
+        "lang": null
+      },
+      "preselect": null,
+      "source": null,
+      "campaign": null,
+      "google": null
+    }
+  },
+  {
+    "name": "living_lang_ko_ok",
+    "query": "?property=NYAL&arrival=2026-10-10&departure=2026-10-12&lang=ko",
+    "today": "2026-09-06",
+    "site": {
+      "properties": {
+        "GBAL": 3,
+        "GNBE": 4,
+        "NYAL": 4
+      },
+      "langs": [
+        "de",
+        "en",
+        "fr",
+        "it",
+        "ja",
+        "ko",
+        "zh"
+      ],
+      "defaultProperty": null
+    },
+    "expect": {
+      "search": {
+        "property": "NYAL",
+        "arrival": "2026-10-10",
+        "departure": "2026-10-12",
+        "adults": 2,
+        "children": 0,
+        "lang": "ko"
+      },
+      "preselect": null,
+      "source": null,
+      "campaign": null,
+      "google": null
+    }
+  },
+  {
+    "name": "living_lang_pt_faellt_auf_en",
+    "query": "?property=GNBE&arrival=2026-10-10&departure=2026-10-12&lang=pt",
+    "today": "2026-09-06",
+    "site": {
+      "properties": {
+        "GBAL": 3,
+        "GNBE": 4,
+        "NYAL": 4
+      },
+      "langs": [
+        "de",
+        "en",
+        "fr",
+        "it",
+        "ja",
+        "ko",
+        "zh"
+      ],
+      "defaultProperty": null
+    },
+    "expect": {
+      "search": {
+        "property": "GNBE",
+        "arrival": "2026-10-10",
+        "departure": "2026-10-12",
+        "adults": 2,
+        "children": 0,
+        "lang": "en"
+      },
+      "preselect": null,
+      "source": null,
+      "campaign": null,
+      "google": null
+    }
+  },
+  {
+    "name": "room_rate_mit_praefix",
+    "query": "?arrival=2026-10-10&departure=2026-10-12&room=HCSI-DZSU&rate=HCSI-NONREFBB_IBE",
+    "today": "2026-09-06",
+    "site": {
+      "properties": {
+        "HCSI": 4
+      },
+      "langs": [
+        "de",
+        "en"
+      ],
+      "defaultProperty": "HCSI"
+    },
+    "expect": {
+      "search": {
+        "property": "HCSI",
+        "arrival": "2026-10-10",
+        "departure": "2026-10-12",
+        "adults": 2,
+        "children": 0,
+        "lang": null
+      },
+      "preselect": {
+        "room": "HCSI-DZSU",
+        "rate": "HCSI-NONREFBB_IBE"
+      },
+      "source": null,
+      "campaign": null,
+      "google": null
+    }
+  },
+  {
+    "name": "room_rate_ohne_praefix_klein",
+    "query": "?arrival=2026-10-10&departure=2026-10-12&room=dzsu&rate=nonrefbb_ibe",
+    "today": "2026-09-06",
+    "site": {
+      "properties": {
+        "HCSI": 4
+      },
+      "langs": [
+        "de",
+        "en"
+      ],
+      "defaultProperty": "HCSI"
+    },
+    "expect": {
+      "search": {
+        "property": "HCSI",
+        "arrival": "2026-10-10",
+        "departure": "2026-10-12",
+        "adults": 2,
+        "children": 0,
+        "lang": null
+      },
+      "preselect": {
+        "room": "DZSU",
+        "rate": "NONREFBB_IBE"
+      },
+      "source": null,
+      "campaign": null,
+      "google": null
+    }
+  },
+  {
+    "name": "nur_room",
+    "query": "?arrival=2026-10-10&departure=2026-10-12&room=DZSU",
+    "today": "2026-09-06",
+    "site": {
+      "properties": {
+        "HCSI": 4
+      },
+      "langs": [
+        "de",
+        "en"
+      ],
+      "defaultProperty": "HCSI"
+    },
+    "expect": {
+      "search": {
+        "property": "HCSI",
+        "arrival": "2026-10-10",
+        "departure": "2026-10-12",
+        "adults": 2,
+        "children": 0,
+        "lang": null
+      },
+      "preselect": {
+        "room": "DZSU",
+        "rate": null
+      },
+      "source": null,
+      "campaign": null,
+      "google": null
+    }
+  },
+  {
+    "name": "room_ohne_daten",
+    "query": "?room=DZSU",
+    "today": "2026-09-06",
+    "site": {
+      "properties": {
+        "HCSI": 4
+      },
+      "langs": [
+        "de",
+        "en"
+      ],
+      "defaultProperty": "HCSI"
+    },
+    "expect": {
+      "search": null,
+      "preselect": {
+        "room": "DZSU",
+        "rate": null
+      },
+      "source": null,
+      "campaign": null,
+      "google": null
+    }
+  },
+  {
+    "name": "utm_sonderzeichen",
+    "query": "?arrival=2026-10-10&departure=2026-10-12&utm_source=google&utm_medium=organic&utm_campaign=hotel-fbl%3Cscript%3E",
+    "today": "2026-09-06",
+    "site": {
+      "properties": {
+        "HCSI": 4
+      },
+      "langs": [
+        "de",
+        "en"
+      ],
+      "defaultProperty": "HCSI"
+    },
+    "expect": {
+      "search": {
+        "property": "HCSI",
+        "arrival": "2026-10-10",
+        "departure": "2026-10-12",
+        "adults": 2,
+        "children": 0,
+        "lang": null
+      },
+      "preselect": null,
+      "source": null,
+      "campaign": {
+        "utm_source": "google",
+        "utm_medium": "organic"
+      },
+      "google": null
+    }
+  },
+  {
+    "name": "utm_zu_lang",
+    "query": "?arrival=2026-10-10&departure=2026-10-12&utm_source=google&utm_medium=organic&utm_campaign=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "today": "2026-09-06",
+    "site": {
+      "properties": {
+        "HCSI": 4
+      },
+      "langs": [
+        "de",
+        "en"
+      ],
+      "defaultProperty": "HCSI"
+    },
+    "expect": {
+      "search": {
+        "property": "HCSI",
+        "arrival": "2026-10-10",
+        "departure": "2026-10-12",
+        "adults": 2,
+        "children": 0,
+        "lang": null
+      },
+      "preselect": null,
+      "source": null,
+      "campaign": {
+        "utm_source": "google",
+        "utm_medium": "organic"
+      },
+      "google": null
+    }
+  },
+  {
+    "name": "utm_medium_fremd",
+    "query": "?arrival=2026-10-10&departure=2026-10-12&utm_source=google&utm_medium=email&utm_campaign=hotel-fbl",
+    "today": "2026-09-06",
+    "site": {
+      "properties": {
+        "HCSI": 4
+      },
+      "langs": [
+        "de",
+        "en"
+      ],
+      "defaultProperty": "HCSI"
+    },
+    "expect": {
+      "search": {
+        "property": "HCSI",
+        "arrival": "2026-10-10",
+        "departure": "2026-10-12",
+        "adults": 2,
+        "children": 0,
+        "lang": null
+      },
+      "preselect": null,
+      "source": null,
+      "campaign": {
+        "utm_source": "google",
+        "utm_medium": "email",
+        "utm_campaign": "hotel-fbl"
+      },
+      "google": null
+    }
+  },
+  {
+    "name": "nur_utm_ohne_daten",
+    "query": "?utm_source=google&utm_medium=organic&utm_campaign=hotel-fbl",
+    "today": "2026-09-06",
+    "site": {
+      "properties": {
+        "HCSI": 4
+      },
+      "langs": [
+        "de",
+        "en"
+      ],
+      "defaultProperty": "HCSI"
+    },
+    "expect": {
+      "search": null,
+      "preselect": null,
+      "source": "google_fbl",
+      "campaign": {
+        "utm_source": "google",
+        "utm_medium": "organic",
+        "utm_campaign": "hotel-fbl"
+      },
+      "google": null
+    }
+  },
+  {
+    "name": "ucur_gtotal",
+    "query": "?arrival=2026-10-10&departure=2026-10-12&ucur=EUR&gtotal=638.95",
+    "today": "2026-09-06",
+    "site": {
+      "properties": {
+        "HCSI": 4
+      },
+      "langs": [
+        "de",
+        "en"
+      ],
+      "defaultProperty": "HCSI"
+    },
+    "expect": {
+      "search": {
+        "property": "HCSI",
+        "arrival": "2026-10-10",
+        "departure": "2026-10-12",
+        "adults": 2,
+        "children": 0,
+        "lang": null
+      },
+      "preselect": null,
+      "source": null,
+      "campaign": null,
+      "google": {
+        "ucur": "EUR",
+        "gtotal": "638.95"
+      }
+    }
+  },
+  {
+    "name": "ucur_klein_gtotal_falsch",
+    "query": "?arrival=2026-10-10&departure=2026-10-12&ucur=eur&gtotal=1'234",
+    "today": "2026-09-06",
+    "site": {
+      "properties": {
+        "HCSI": 4
+      },
+      "langs": [
+        "de",
+        "en"
+      ],
+      "defaultProperty": "HCSI"
+    },
+    "expect": {
+      "search": {
+        "property": "HCSI",
+        "arrival": "2026-10-10",
+        "departure": "2026-10-12",
+        "adults": 2,
+        "children": 0,
+        "lang": null
+      },
+      "preselect": null,
+      "source": null,
+      "campaign": null,
+      "google": null
+    }
+  },
+  {
+    "name": "gtotal_ganzzahl",
+    "query": "?arrival=2026-10-10&departure=2026-10-12&gtotal=640",
+    "today": "2026-09-06",
+    "site": {
+      "properties": {
+        "HCSI": 4
+      },
+      "langs": [
+        "de",
+        "en"
+      ],
+      "defaultProperty": "HCSI"
+    },
+    "expect": {
+      "search": {
+        "property": "HCSI",
+        "arrival": "2026-10-10",
+        "departure": "2026-10-12",
+        "adults": 2,
+        "children": 0,
+        "lang": null
+      },
+      "preselect": null,
+      "source": null,
+      "campaign": null,
+      "google": {
+        "ucur": null,
+        "gtotal": "640"
+      }
+    }
+  },
+  {
+    "name": "leer",
+    "query": "",
+    "today": "2026-09-06",
+    "site": {
+      "properties": {
+        "HCSI": 4
+      },
+      "langs": [
+        "de",
+        "en"
+      ],
+      "defaultProperty": "HCSI"
+    },
+    "expect": {
+      "search": null,
+      "preselect": null,
+      "source": null,
+      "campaign": null,
+      "google": null
+    }
+  },
+  {
+    "name": "nur_fragezeichen",
+    "query": "?",
+    "today": "2026-09-06",
+    "site": {
+      "properties": {
+        "HCSI": 4
+      },
+      "langs": [
+        "de",
+        "en"
+      ],
+      "defaultProperty": "HCSI"
+    },
+    "expect": {
+      "search": null,
+      "preselect": null,
+      "source": null,
+      "campaign": null,
+      "google": null
+    }
+  }
+]

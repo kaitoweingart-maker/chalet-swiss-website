@@ -1,0 +1,371 @@
+name: plan-abgleich
+
+# Serverseitiger Teil des Bau-Standards: prüft auf JEDEM Pull Request, ob die Arbeit
+# eines Segment-Branches zum Bauplan passt — Plan-Abgleich in jeder Commit-Message und
+# Datei-Scope des Segments.
+#
+# Die Lehre des Hauses ist belegt: Serverseitig durchgesetzt wirkt, Regeltext wirkt nicht.
+# Die Rebase-Regel stand vier Tage geschrieben und wurde trotzdem gebrochen; erst die
+# serverseitige Abschaltung von Squash hat es beendet. Dieser Check ist die einzige
+# Schicht, die auf jeder Maschine und für jeden greift, Mensch wie Agent.
+#
+# WARUM DIE PRÜFLOGIK INLINE STEHT statt aus dem Repo gelesen zu werden:
+# Das GITHUB_TOKEN eines fremden Repos kann das private claude-mcp-setup nicht
+# auschecken. Ein zusätzlicher Org-PAT wäre ein Secret, das rottet. Der Preis ist eine
+# wörtliche Kopie des Parserkerns aus scripts/bauplan-scope.sh. Gegen deren Drift wacht
+# hooks/tests/test-plan-abgleich-sync.sh: Weicht die Kopie ab, ist die Suite rot. Ohne
+# diesen Guard entstünden zwei Auslegungen des Formats, und genau das soll der Kontrakt
+# verhindern.
+#
+# OFFEN, gehört der Verdrahtung: In diesem Repo läuft bisher KEINE CI, die die Suiten
+# unter hooks/tests/ startet — vor diesem Segment gab es gar kein .github/workflows/.
+# Der Guard ist also scharf, aber nur, wer ihn aufruft. Ein Test-Workflow für dieses
+# Repo ist eine eigene Datei und damit ausserhalb dieses Segments.
+#
+# WARUM DER WORKFLOW IMMER LÄUFT:
+# Ein Required Check, dessen Workflow auf einem PR gar nicht startet, blockiert den Merge
+# dauerhaft mit "Expected — waiting for status". Deshalb gibt es hier KEINE Branch- oder
+# Pfadfilter. Der Workflow läuft immer und endet in Sekunden grün, wenn er nicht
+# zuständig ist (Branch nicht segment/*, oder kein Bauplan mit status 'aktiv' im
+# Head-Tree).
+
+on:
+  pull_request:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  plan-abgleich:
+    name: plan-abgleich
+    runs-on: ubuntu-latest
+    steps:
+      - name: Repo auschecken
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Bauplan-Abgleich prüfen
+        shell: bash
+        env:
+          PA_BRANCH: ${{ github.head_ref }}
+          PA_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PA_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PA_ROOT: .
+        run: |
+          # >>> PLAN-ABGLEICH-PRUEFLOGIK >>>
+          # Diese Datei wird von hooks/tests/test-plan-abgleich-sync.sh zwischen den
+          # Markern herausgeschnitten und lokal gegen Fixtures gefahren. Sie darf deshalb
+          # nichts voraussetzen ausser den vier PA_*-Umgebungsvariablen und git.
+
+          # GitHub startet 'shell: bash' mit '-eo pipefail'. Mit -e wuerde die erste
+          # Zuweisung aus einem Kommando, das absichtlich 1 oder 3 liefert (cmd_find,
+          # cmd_check), den Schritt sofort beenden — und damit fail-open zu fail-closed
+          # verdrehen. Deshalb -e hier ausdruecklich abschalten.
+          set +e
+          set -uo pipefail
+
+          EX_OK=0
+          EX_VIOLATION=1
+          EX_USAGE=2
+          EX_NA=3
+
+          # Was zwischen den KERN-Markern steht, ist eine WÖRTLICHE Kopie aus
+          # scripts/bauplan-scope.sh: der Bereich zwischen den Bannern "Block-Extraktion"
+          # und "Dispatch". Nicht von Hand umformulieren. Ändert sich der Parser dort,
+          # wird diese Kopie nachgezogen, sonst schlägt der Sync-Guard an. Der
+          # Erklärtext gehört ausserhalb der Marker, sonst vergleicht der Guard ihn mit.
+          # >>> BAUPLAN-SCOPE-KERN >>>
+          # ---------------------------------------------------------------- Block-Extraktion
+          #
+          # Liest fenced Code-Blocks mit der Info-Zeile '<typ> <selektor>'.
+          # Einrückung ist erlaubt, weil die Blöcke im Bauplan unter Aufzählungspunkten stehen.
+          #
+          # Blöcke, die mit VIER oder mehr Backticks geöffnet werden, sind per Markdown-Konvention
+          # Verbatim-Beispiele, die selbst Backticks zeigen. Ihr Inhalt wird komplett übersprungen —
+          # sonst liest der Parser die Formatbeispiele in der Doku als echten Scope.
+          #
+          # BEKANNTE GRENZE: Ein Beispiel, das nur in DREI Backticks steht, ist von echtem Inhalt
+          # nicht unterscheidbar und leckt in das Ergebnis. Deshalb schreibt der Kontrakt vor, dass
+          # Beispiele in vier Backticks gehören. Eine echte Fence-Verschachtelung in awk zu bauen
+          # kostet mehr, als der Fall wert ist.
+          #
+          # Zeilenenden: CR wird abgeschnitten, damit CRLF-Dateien nicht stumm ins Leere laufen.
+          extract_block() { # <plan> <typ> <selektor> <kommentare-filtern:1|0>
+            local plan="$1" typ="$2" selektor="$3" filter="${4:-1}"
+            [ -f "$plan" ] || return "$EX_NA"
+
+            awk -v want="$selektor" -v typ="$typ" -v filter="$filter" '
+              function trim(s) { sub(/\r$/, "", s); sub(/^[ \t]+/, "", s); sub(/[ \t]+$/, "", s); return s }
+              # Führende Nullen in Segmentnummern normalisieren: segment=01 und segment=1 sind gleich.
+              function normsel(s,   n) {
+                if (s ~ /^segment=[0-9]+$/) { n = substr(s, 9) + 0; return "segment=" n }
+                return s
+              }
+              {
+                line = trim($0)
+
+                # Verbatim-Beispielblöcke (>= 4 Backticks) vollständig überspringen
+                if (line ~ /^````+/) { verbatim = !verbatim; next }
+                if (verbatim) next
+
+                if (inblock) {
+                  if (line ~ /^```/) { inblock = 0; next }
+                  if (line == "") next
+                  if (filter == 1 && line ~ /^#/) next
+                  print line
+                  next
+                }
+
+                if (line ~ ("^```[ \t]*" typ "[ \t]")) {
+                  sel = line
+                  sub(("^```[ \t]*" typ "[ \t]+"), "", sel)
+                  if (normsel(trim(sel)) == normsel(want)) inblock = 1
+                }
+              }
+            ' "$plan"
+          }
+
+          cmd_files() { # <plan> <segment-nr>
+            local plan="$1" nr="$2" out
+            out="$(extract_block "$plan" "bauplan-scope" "segment=$nr" 1)" || return "$EX_NA"
+            [ -n "$out" ] || return "$EX_NA"
+            printf '%s\n' "$out"
+          }
+
+          cmd_sammelstellen() { # <plan>
+            extract_block "$1" "bauplan-scope" "sammelstellen" 1
+          }
+
+          cmd_criteria() { # <plan> <segment-nr>
+            # Kriterien werden WÖRTLICH ausgegeben (kein Kommentarfilter): '#' kann Teil eines
+            # Kriteriums sein. Segment 1 zitiert sie in seiner Deny-Begründung.
+            local plan="$1" nr="$2" out
+            out="$(extract_block "$plan" "bauplan-kriterien" "segment=$nr" 0)" || return "$EX_NA"
+            [ -n "$out" ] || return "$EX_NA"
+            printf '%s\n' "$out"
+          }
+
+          cmd_status() { # <plan>
+            local plan="$1"
+            [ -f "$plan" ] || return "$EX_NA"
+            # Nur der Frontmatter-Bereich zwischen den ersten beiden '---'-Zeilen.
+            # Ohne diese Begrenzung würde ein 'status: aktiv' irgendwo im Fliesstext ein Dokument
+            # scharf schalten, das gar kein Bauplan ist.
+            awk '
+              { sub(/\r$/, "") }
+              NR == 1 && /^---[ \t]*$/ { infm = 1; next }
+              infm && /^---[ \t]*$/     { exit }
+              infm && /^status:/        { sub(/^status:[ \t]*/, ""); gsub(/[ \t]+$/, ""); print; exit }
+            ' "$plan"
+          }
+
+          cmd_find() { # <repo-root> <plankey>
+            local root="$1" key="$2" f st
+            [ -d "$root" ] || return "$EX_NA"
+            # Das Datumssuffix ist im Glob verankert. Ohne Anker fände der kürzere Schlüssel
+            # 'bau-standard' den Plan 'bauplan-bau-standard-haertung-…' und die Gates setzten
+            # den falschen Plan durch.
+            for f in "$root"/docs/bauplan-"$key"-[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9].md; do
+              [ -f "$f" ] || continue
+              st="$(cmd_status "$f")"
+              if [ "$st" = "aktiv" ]; then
+                printf '%s\n' "$f"
+                return "$EX_OK"
+              fi
+            done
+            return "$EX_NA"
+          }
+
+          # Pfad auf die repo-relative Form bringen, in der die Scope-Blöcke geschrieben sind.
+          # Ohne das lehnt check absolute Pfade ab — und genau die liefert der Tool-Input an das
+          # Edit-Gate. Das wäre fail-closed und würde sich über alle Segmente multiplizieren.
+          normalize_path() { # <pfad> <root|leer>
+            local p="$1" root="${2:-}"
+            if [ -n "$root" ]; then
+              root="${root%/}"
+              case "$p" in "$root"/*) p="${p#"$root"/}" ;; esac
+            fi
+            while :; do
+              case "$p" in ./*) p="${p#./}" ;; *) break ;; esac
+            done
+            printf '%s' "$p"
+          }
+
+          matches_any() { # <pfad> <muster-liste auf stdin-Variable>
+            local datei="$1" liste="$2" pat
+            while IFS= read -r pat; do
+              [ -n "$pat" ] || continue
+              # shellcheck disable=SC2053  # Glob-Vergleich ist hier gewollt
+              if [[ "$datei" == $pat ]]; then return 0; fi
+            done <<< "$liste"
+            return 1
+          }
+
+          cmd_check() { # [--root <dir>] <plan> <segment-nr> <datei>...
+            local root=""
+            if [ "${1:-}" = "--root" ]; then
+              [ $# -ge 2 ] || return "$EX_USAGE"
+              root="$2"; shift 2
+            fi
+            [ $# -ge 3 ] || return "$EX_USAGE"
+
+            local plan="$1" nr="$2"; shift 2
+            [ -f "$plan" ] || return "$EX_NA"
+            [ "$(cmd_status "$plan")" = "aktiv" ] || return "$EX_NA"
+
+            local scope sammel
+            scope="$(extract_block "$plan" "bauplan-scope" "segment=$nr" 1)"
+            [ -n "$scope" ] || return "$EX_NA"
+            sammel="$(extract_block "$plan" "bauplan-scope" "sammelstellen" 1)"
+
+            local roh datei verstoss=0
+            for roh in "$@"; do
+              [ -n "$roh" ] || continue
+              datei="$(normalize_path "$roh" "$root")"
+
+              # Sammelstellen schlagen den Segment-Scope: erst prüfen, immer Verstoss.
+              if matches_any "$datei" "$sammel"; then
+                printf '%s\t(Sammelstelle — gehoert der Verdrahtung)\n' "$datei"
+                verstoss=1
+                continue
+              fi
+
+              if ! matches_any "$datei" "$scope"; then
+                printf '%s\t(ausserhalb des Scopes von Segment %s)\n' "$datei" "$nr"
+                verstoss=1
+              fi
+            done
+
+            [ "$verstoss" = "0" ] && return "$EX_OK"
+            return "$EX_VIOLATION"
+          }
+
+          # <<< BAUPLAN-SCOPE-KERN <<<
+
+          # ---------------------------------------------------------------- Treiber
+          #
+          # Fail-open in genau vier Fällen, und jeder davon endet GRÜN:
+          #   1. Branch folgt nicht 'segment/<plankey>/<nr>-<slug>'
+          #   2. kein Bauplan zu diesem plankey mit status 'aktiv' im Head-Tree
+          #   3. der aktive Plan kennt dieses Segment nicht
+          #   4. cmd_check meldet Exit 2 (Aufruffehler) — ein eigener Fehler darf keine
+          #      fremde Arbeit stoppen, so steht es in der Exit-Code-Konvention
+          #
+          # Bekannte Grenze, dieselbe wie bei den lokalen Gates: Wer bewusst auf einem
+          # anders benannten Branch baut, wird nicht erfasst.
+
+          gruen() { printf '::notice title=plan-abgleich::%s\n' "$1"; printf '%s\n' "$1"; exit 0; }
+          rot()   { printf '::error title=plan-abgleich::%s\n' "$1"; }
+
+          BRANCH="${PA_BRANCH:-}"
+          ROOT="${PA_ROOT:-.}"
+          BASE="${PA_BASE_SHA:-}"
+          HEAD="${PA_HEAD_SHA:-}"
+
+          # Gibt die fehlenden Bestandteile des Plan-Abgleich-Blocks aus, leer wenn
+          # vollständig. Der Kopf steht auf einer eigenen Zeile, die drei Schlüssel
+          # darunter eingerückt — so schreibt es docs/bauplan-format.md vor.
+          abgleich_fehlend() {
+            awk '
+              { sub(/\r$/, "") }
+              /^[ \t]*Plan-Abgleich:[ \t]*$/ { kopf = 1; next }
+              kopf && /^[ \t]*erledigt:/     { e = 1 }
+              kopf && /^[ \t]*offen:/        { o = 1 }
+              kopf && /^[ \t]*abweichung:/   { a = 1 }
+              END {
+                if (!kopf) { print "der Block Plan-Abgleich: fehlt ganz"; exit }
+                s = ""
+                if (!e) s = s " erledigt:"
+                if (!o) s = s " offen:"
+                if (!a) s = s " abweichung:"
+                sub(/^ /, "", s)
+                print s
+              }
+            '
+          }
+
+          case "$BRANCH" in
+            segment/*/*) ;;
+            *) gruen "nicht zuständig: Branch '$BRANCH' folgt nicht 'segment/<plankey>/<nr>-<slug>'." ;;
+          esac
+
+          rest="${BRANCH#segment/}"
+          PLANKEY="${rest%%/*}"
+          segteil="${rest#*/}"
+          NR="${segteil%%-*}"
+
+          case "$NR" in
+            ''|*[!0-9]*) gruen "nicht zuständig: '$segteil' beginnt nicht mit einer Segmentnummer." ;;
+          esac
+
+          PLAN="$(cmd_find "$ROOT" "$PLANKEY")"
+          if [ -z "$PLAN" ]; then
+            gruen "nicht zuständig: kein docs/bauplan-$PLANKEY-<YYYY-MM-DD>.md mit status 'aktiv' im Head-Tree."
+          fi
+
+          printf 'Plan:    %s\n' "$PLAN"
+          printf 'Segment: %s\n' "$NR"
+          printf 'Basis:   %s\n' "$BASE"
+          printf 'Head:    %s\n' "$HEAD"
+          printf '\n'
+
+          fehler=0
+
+          # ---- Prüfung 1: Plan-Abgleich-Block in jeder Commit-Message ----------------
+          #
+          # Merge-Commits sind ausgenommen: Ein Merge von main in den Branch trägt keine
+          # eigene Arbeit und könnte den Block nicht sinnvoll führen.
+          printf '== Pruefung 1: Plan-Abgleich in den Commit-Messages ==\n'
+          SHAS="$(git -C "$ROOT" log --no-merges --format=%H "$BASE".."$HEAD" 2>/dev/null)"
+          if [ -z "$SHAS" ]; then
+            printf '  keine eigenen Commits im Bereich %s..%s\n' "$BASE" "$HEAD"
+          fi
+          for sha in $SHAS; do
+            fehlend="$(git -C "$ROOT" log -1 --format=%B "$sha" 2>/dev/null | abgleich_fehlend)"
+            if [ -n "$fehlend" ]; then
+              rot "$sha — Plan-Abgleich unvollstaendig: $fehlend"
+              fehler=1
+            else
+              printf '  OK  %s\n' "$sha"
+            fi
+          done
+
+          # ---- Prüfung 2: Datei-Scope des Segments -----------------------------------
+          printf '\n== Pruefung 2: Datei-Scope von Segment %s ==\n' "$NR"
+          DATEIEN="$(git -C "$ROOT" diff --name-only "$BASE...$HEAD" 2>/dev/null)"
+          if [ -z "$DATEIEN" ]; then
+            printf '  keine geaenderten Dateien\n'
+          else
+            ARGS=()
+            while IFS= read -r d; do
+              [ -n "$d" ] || continue
+              printf '  geaendert: %s\n' "$d"
+              ARGS+=("$d")
+            done <<< "$DATEIEN"
+
+            if [ "${#ARGS[@]}" -gt 0 ]; then
+              verstoss="$(cmd_check --root "$ROOT" "$PLAN" "$NR" "${ARGS[@]}")"
+              rc=$?
+              case "$rc" in
+                0) printf '  alle Dateien im Scope von Segment %s\n' "$NR" ;;
+                1) while IFS= read -r z; do
+                     [ -n "$z" ] || continue
+                     rot "Scope-Verstoss: $z"
+                   done <<< "$verstoss"
+                   fehler=1 ;;
+                3) printf '  Segment %s hat keinen Scope-Block im Plan — nicht zustaendig.\n' "$NR" ;;
+                *) printf '  cmd_check meldete Exit %s (Aufruffehler) — durchgelassen, nicht blockiert.\n' "$rc" ;;
+              esac
+            fi
+          fi
+
+          printf '\n'
+          if [ "$fehler" = "0" ]; then
+            printf 'plan-abgleich: gruen.\n'
+            exit 0
+          fi
+          printf 'plan-abgleich: ROT. Siehe die ::error-Zeilen oben.\n'
+          exit 1
+          # <<< PLAN-ABGLEICH-PRUEFLOGIK <<<
