@@ -1,7 +1,7 @@
 ---
 thema: fbl-ibe
 datum: 2026-09-06
-status: aktiv
+status: verdrahtet
 repo: ~/Projects/chalet-swiss-website
 plankey: fbl-ibe
 weitere_repos:
