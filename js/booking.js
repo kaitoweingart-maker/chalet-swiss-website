@@ -46,13 +46,6 @@ function plausibleEvent(name, data) {
   } catch (e) { /* Analytics darf die Buchungsstrecke nie brechen */ }
 }
 
-// GA4: dieselbe Event-Taxonomie, uebersetzt auf die GA4-Standardnamen. Die
-// Parameterliste je Ereignis ist abschliessend -- das data-Objekt wird NIE als
-// Ganzes durchgereicht, sonst wandern check_in, promo_code oder error_message
-// unbemerkt mit. Verboten bleiben Namen, E-Mail, Telefon, Reisedaten,
-// Gutscheincodes, Fehlertexte und jeder Formularinhalt; einzige zulaessige
-// Kennung ist transaction_id (die Buchungsnummer, damit ein Umsatz nicht
-// doppelt gezaehlt wird).
 // Buchungsquelle als Merkmal anhaengen (K4). Fehlt die Quelle, fehlt das
 // Merkmal; die Parameterliste je Ereignis bleibt sonst abschliessend.
 function withSource(params, d) {
@@ -60,6 +53,13 @@ function withSource(params, d) {
   return params;
 }
 
+// GA4: dieselbe Event-Taxonomie, uebersetzt auf die GA4-Standardnamen. Die
+// Parameterliste je Ereignis ist abschliessend -- das data-Objekt wird NIE als
+// Ganzes durchgereicht, sonst wandern check_in, promo_code oder error_message
+// unbemerkt mit. Verboten bleiben Namen, E-Mail, Telefon, Reisedaten,
+// Gutscheincodes, Fehlertexte und jeder Formularinhalt; einzige zulaessige
+// Kennung ist transaction_id (die Buchungsnummer, damit ein Umsatz nicht
+// doppelt gezaehlt wird).
 function ga4Event(name, data) {
   try {
     if (typeof window.gtag !== 'function') return;
@@ -167,8 +167,7 @@ function adsEvent(name, data) {
       value: d.total_price || 0,
       currency: d.currency || 'CHF',
       transaction_id: d.booking_id || '',
-      // Googles optionaler Hotel-Parameter (K4). Reisedaten gehen bewusst
-      // nicht mit; die bestehende Regel dazu bleibt unangetastet.
+      // Googles optionaler Hotel-Parameter (K4). Reisedaten bleiben draussen.
       id: PROPERTY_ID
     });
   } catch (e) { /* Analytics darf die Buchungsstrecke nie brechen */ }
@@ -319,8 +318,7 @@ function getOfferGross(offer) {
 }
 
 // ===== MICRODATA (K2) =====
-// Alles innerhalb von #offersGrid, das renderOffers ohnehin neu schreibt. Das
-// JSON-LD Hotel im <head> bleibt unberuehrt (anderer Zweck, kein Konflikt).
+// Alles innerhalb von #offersGrid; das JSON-LD im <head> bleibt unberuehrt.
 function microMeta(prop, value) {
   return '<meta itemprop="' + prop + '" content="' + escapeHtml(String(value)) + '" />';
 }
@@ -337,9 +335,8 @@ function microStay() {
     microMeta('numChildren', parseInt(searchParams.children) || 0);
 }
 
-// Genau eine Komponente, und nur wenn die Kurtaxe separat ausgewiesen ist.
-// Fuer den Zimmerpreis gibt es keinen Typ, den Google kennt, also auch keine
-// Komponente.
+// Genau eine Komponente, und nur fuer die separat ausgewiesene Kurtaxe. Fuer
+// den Zimmerpreis kennt Google keinen Typ, also gibt es dort keine Komponente.
 function microPriceSpec(offer) {
   var tax = getOfferCityTax(offer);
   var html = '<div itemprop="priceSpecification" itemscope itemtype="https://schema.org/CompoundPriceSpecification">' +
@@ -1137,7 +1134,17 @@ function renderOffers(data) {
       }
     });
   });
+  // Ein Sprachwechsel schreibt die Liste neu; ohne das hier verliert eine
+  // bereits getroffene Auswahl still ihre Markierung.
+  var selIdx = currentOffers.indexOf(selectedOffer);
+  if (selIdx !== -1) markSelectedCard(selIdx);
   applyDeepLinkAfterRender();
+}
+
+function markSelectedCard(index) {
+  offersGrid.querySelectorAll('.offer-card').forEach(function (card) {
+    card.classList.toggle('selected', parseInt(card.getAttribute('data-index')) === index);
+  });
 }
 
 // Storno-Bedingung aus Apaleo cancellationFee + Kategorie in lesbaren Text uebersetzen.
@@ -1228,9 +1235,7 @@ function selectOffer(index) {
     unit_type: selectedOffer.unitGroupName || ''
   });
 
-  offersGrid.querySelectorAll('.offer-card').forEach(function (card) {
-    card.classList.toggle('selected', parseInt(card.getAttribute('data-index')) === index);
-  });
+  markSelectedCard(index);
 
   guestForm.style.display = 'block';
   if (bookingStatus) bookingStatus.style.display = 'none';
@@ -1527,9 +1532,8 @@ if (confirmBtn) {
       comment: commentParts.join(' | ').replace(/\| $/,'').trim(),
     };
 
-    // Buchungsquelle und Kampagnenkennung aus dem Deep Link (K3, Frontend).
-    // Beides sind Kampagnenbezeichner ohne Personenbezug und gehen deshalb
-    // unabhaengig vom Consent mit; ohne Deep Link fehlen beide Felder ganz.
+    // Quelle und Kampagne aus dem Deep Link (K3): Kampagnenbezeichner ohne
+    // Personenbezug, gehen ohne Consent mit. Ohne Deep Link fehlen beide.
     if (deepLink && deepLink.source) payload.bookingSource = deepLink.source;
     if (deepLink && deepLink.campaign) payload.campaign = deepLink.campaign;
 
@@ -1997,9 +2001,8 @@ function showPaymentRetry(confirmationId, email, bookingData) {
 }
 
 // ===== DEEP LINK (K1b) =====
-// Ohne js/deeplink.js passiert hier nichts: window.amDeepLink fehlt, das
-// Ereignis kommt nie, der Code ist inert. Den Script-Tag setzt erst die
-// Verdrahtung, bis dahin verhaelt sich die Seite exakt wie bisher.
+// Ohne js/deeplink.js ist das hier inert: window.amDeepLink fehlt, das Ereignis
+// kommt nie. Den Script-Tag setzt erst die Verdrahtung.
 var deepLink = null;
 var deepLinkPreselectDone = false;
 var deepLinkMismatchDone = false;
@@ -2035,9 +2038,8 @@ function findPreselectIndex(pre) {
   return -1;
 }
 
-// Abweichung zwischen dem bei Google angezeigten Gesamtpreis und dem Brutto des
-// vorausgewaehlten (sonst guenstigsten) Angebots. Nur eine Messung, keine
-// Korrektur: der Preis der IBE bleibt, was er ist.
+// Abweichung zwischen Googles angezeigtem Gesamtpreis und dem Brutto des
+// vorausgewaehlten (sonst guenstigsten) Angebots. Nur Messung, keine Korrektur.
 function reportPriceMismatch() {
   var offer = selectedOffer;
   if (!offer) {
