@@ -1,0 +1,70 @@
+{
+  "property": "HCSI",
+  "propertyName": "Hotel Chalet Swiss Interlaken",
+  "arrival": "2026-10-10",
+  "departure": "2026-10-12",
+  "nights": 2,
+  "adults": 2,
+  "offers": [
+    {
+      "ratePlanId": "HCSI-NONREFBB_IBE-DZST",
+      "ratePlanCode": "NONREFBB_IBE",
+      "ratePlanName": "Non-refundable BB IBE ",
+      "category": "Non-Refundable",
+      "unitGroupId": "HCSI-DZST",
+      "unitGroupName": "Standard Double/Twin",
+      "unitGroupDescription": "Standard Double/Twin",
+      "availableUnits": 11,
+      "totalGrossAmount": { "amount": 489.6, "currency": "CHF" },
+      "averagePerNight": { "amount": 244.8, "currency": "CHF" },
+      "cancellationFee": {
+        "code": "NONREF",
+        "name": "Non Refundable",
+        "description": "No free cancellation",
+        "dueDateTime": "2026-09-06T12:00:00+02:00",
+        "fee": { "amount": 489.6, "currency": "CHF" }
+      },
+      "cityTax": { "amount": 14.0, "currency": "CHF", "included": false }
+    },
+    {
+      "ratePlanId": "HCSI-NONREFBB_IBE-DZSU",
+      "ratePlanCode": "NONREFBB_IBE",
+      "ratePlanName": "Non-refundable BB IBE ",
+      "category": "Non-Refundable",
+      "unitGroupId": "HCSI-DZSU",
+      "unitGroupName": "Superior Double with Balcony",
+      "unitGroupDescription": "Superior Double with Balcony",
+      "availableUnits": 4,
+      "totalGrossAmount": { "amount": 624.95, "currency": "CHF" },
+      "averagePerNight": { "amount": 312.48, "currency": "CHF" },
+      "cancellationFee": {
+        "code": "NONREF",
+        "name": "Non Refundable",
+        "description": "No free cancellation",
+        "dueDateTime": "2026-09-06T12:00:00+02:00",
+        "fee": { "amount": 624.95, "currency": "CHF" }
+      },
+      "cityTax": { "amount": 14.0, "currency": "CHF", "included": false }
+    },
+    {
+      "ratePlanId": "HCSI-STANDARDBB_IBE-DZST",
+      "ratePlanCode": "STANDARDBB_IBE",
+      "ratePlanName": "STANDARD RATE BB_IBE",
+      "category": "Refundable",
+      "unitGroupId": "HCSI-DZST",
+      "unitGroupName": "Standard Double/Twin",
+      "unitGroupDescription": "Standard Double/Twin",
+      "availableUnits": 11,
+      "totalGrossAmount": { "amount": 521.9, "currency": "CHF" },
+      "averagePerNight": { "amount": 260.95, "currency": "CHF" },
+      "cancellationFee": {
+        "code": "FLEX",
+        "name": "Flexible",
+        "description": "Free cancellation up to 5 days prior to arrival.",
+        "dueDateTime": "2026-10-05T18:00:00+02:00",
+        "fee": { "amount": 0.0, "currency": "CHF" }
+      },
+      "cityTax": { "amount": 14.0, "currency": "CHF", "included": false }
+    }
+  ]
+}
