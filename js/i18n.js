@@ -29,8 +29,13 @@
     try {
       var urlParams = new URLSearchParams(window.location.search);
       var urlLang = urlParams.get('lang');
-      if (urlLang && SUPPORTED_LANGS[urlLang.toLowerCase()]) {
-        var lang = urlLang.toLowerCase();
+      if (urlLang) {
+        // Erste zwei Zeichen, kleingeschrieben (K1): so trifft auch ein
+        // Deep Link mit "de-CH". Eine vorhandene, aber nicht unterstuetzte
+        // Sprache faellt auf Englisch, nicht mehr auf Storage oder Browser;
+        // sonst bekaeme ein koreanischer Google-Klick eine deutsche Seite.
+        var lang = urlLang.toLowerCase().slice(0, 2);
+        if (!SUPPORTED_LANGS[lang]) lang = 'en';
         // Eigenes try: der umgebende catch gehoert URLSearchParams. Wirft das setItem
         // bei gesperrtem Storage, wuerde das return uebersprungen und ?lang=xx still
         // ignoriert. Gleicher Fix wie amanthos-living-website #35.

@@ -9,6 +9,12 @@
 var IBE_VERSION = '2.0';
 var API_BASE = window.CHALETSWISS_API_BASE || 'https://amanthos-website-api.onrender.com';
 var PROPERTY_ID = 'HCSI';
+// HCSI (Chalet Swiss): hoechste Belegung = 4 (Family Room 4 Bed, 1-4).
+var MAX_GUESTS = 4;
+// Microdata-Konstanten (K2). Die Zeiten stehen so auch im JSON-LD im <head>.
+var HOTEL_NAME = 'Hotel Chalet Swiss Interlaken';
+var CHECKIN_TIME = 'T15:00:00';
+var CHECKOUT_TIME = 'T11:00:00';
 try { console.info('Chalet Swiss IBE v' + IBE_VERSION + ' (city tax brutto)'); } catch (e) {}
 
 // Warteschlange von gtag.js. Der GTM-Container ist weg; die Zeile bleibt, weil
@@ -47,6 +53,13 @@ function plausibleEvent(name, data) {
 // Gutscheincodes, Fehlertexte und jeder Formularinhalt; einzige zulaessige
 // Kennung ist transaction_id (die Buchungsnummer, damit ein Umsatz nicht
 // doppelt gezaehlt wird).
+// Buchungsquelle als Merkmal anhaengen (K4). Fehlt die Quelle, fehlt das
+// Merkmal; die Parameterliste je Ereignis bleibt sonst abschliessend.
+function withSource(params, d) {
+  if (d && d.source) params.booking_source = d.source;
+  return params;
+}
+
 function ga4Event(name, data) {
   try {
     if (typeof window.gtag !== 'function') return;
@@ -56,16 +69,16 @@ function ga4Event(name, data) {
       case 'search_availability':
         // guests ist die Zahl der Erwachsenen, keine Personenangabe; children
         // und die Reisedaten bleiben bewusst draussen.
-        window.gtag('event', 'search_availability', {
+        window.gtag('event', 'search_availability', withSource({
           location: d.location,
           guests: d.guests
-        });
+        }, d));
         break;
       case 'view_offers':
-        window.gtag('event', 'view_item_list', {
+        window.gtag('event', 'view_item_list', withSource({
           item_list_name: d.location,
           offer_count: d.offer_count
-        });
+        }, d));
         break;
       case 'select_offer':
         window.gtag('event', 'select_item', {
@@ -93,11 +106,19 @@ function ga4Event(name, data) {
         });
         break;
       case 'booking_confirmed':
-        window.gtag('event', 'purchase', {
+        window.gtag('event', 'purchase', withSource({
           transaction_id: d.booking_id,
           value: d.total_price,
           currency: waehrung
-        });
+        }, d));
+        break;
+      case 'deeplink_applied':
+        window.gtag('event', 'deeplink_applied', withSource({}, d));
+        break;
+      case 'deeplink_price_mismatch':
+        // delta = IBE minus Google, auf 0.05 gerundet. Kein Preis des Gastes,
+        // nur die Abweichung zwischen zwei oeffentlichen Anzeigen.
+        window.gtag('event', 'deeplink_price_mismatch', { delta: d.delta });
         break;
       case 'payment_initiated':
         window.gtag('event', 'payment_initiated', { transaction_id: d.booking_id });
@@ -145,7 +166,10 @@ function adsEvent(name, data) {
       send_to: ADS_CONVERSION_ID + '/' + ADS_CONVERSION_LABEL,
       value: d.total_price || 0,
       currency: d.currency || 'CHF',
-      transaction_id: d.booking_id || ''
+      transaction_id: d.booking_id || '',
+      // Googles optionaler Hotel-Parameter (K4). Reisedaten gehen bewusst
+      // nicht mit; die bestehende Regel dazu bleibt unangetastet.
+      id: PROPERTY_ID
     });
   } catch (e) { /* Analytics darf die Buchungsstrecke nie brechen */ }
 }
@@ -285,6 +309,56 @@ function getOfferCityTax(offer) {
   return roundCHF(base * (adults + children) / adults);
 }
 function getCityTaxTotal() { return getOfferCityTax(selectedOffer); }
+
+// Bruttobetrag eines Angebots: Zimmerpreis plus separat ausgewiesene Kurtaxe.
+// Karte und Microdata rechnen ueber genau diese Funktion, damit Sichtbares und
+// Auszeichnung nie auseinanderlaufen (K2: structured data matches the visuals).
+function getOfferGross(offer) {
+  var total = (offer && offer.totalGrossAmount && offer.totalGrossAmount.amount) || 0;
+  return roundCHF(total + getOfferCityTax(offer));
+}
+
+// ===== MICRODATA (K2) =====
+// Alles innerhalb von #offersGrid, das renderOffers ohnehin neu schreibt. Das
+// JSON-LD Hotel im <head> bleibt unberuehrt (anderer Zweck, kein Konflikt).
+function microMeta(prop, value) {
+  return '<meta itemprop="' + prop + '" content="' + escapeHtml(String(value)) + '" />';
+}
+
+function microHotelOpen() {
+  return '<div itemscope itemtype="https://schema.org/Hotel" data-am-microdata="1">' +
+    microMeta('name', HOTEL_NAME) + microMeta('identifier', PROPERTY_ID);
+}
+
+function microStay() {
+  return microMeta('checkinTime', (searchParams.arrival || '') + CHECKIN_TIME) +
+    microMeta('checkoutTime', (searchParams.departure || '') + CHECKOUT_TIME) +
+    microMeta('numAdults', parseInt(searchParams.adults) || 1) +
+    microMeta('numChildren', parseInt(searchParams.children) || 0);
+}
+
+// Genau eine Komponente, und nur wenn die Kurtaxe separat ausgewiesen ist.
+// Fuer den Zimmerpreis gibt es keinen Typ, den Google kennt, also auch keine
+// Komponente.
+function microPriceSpec(offer) {
+  var tax = getOfferCityTax(offer);
+  var html = '<div itemprop="priceSpecification" itemscope itemtype="https://schema.org/CompoundPriceSpecification">' +
+    microMeta('price', getOfferGross(offer).toFixed(2)) + microMeta('priceCurrency', 'CHF');
+  if (tax > 0) {
+    html += '<div itemprop="priceComponent" itemscope itemtype="https://schema.org/UnitPriceSpecification">' +
+      microMeta('name', 'City tax') + microMeta('priceComponentType', 'GenericTax') +
+      microMeta('price', tax.toFixed(2)) + microMeta('priceCurrency', 'CHF') + '</div>';
+  }
+  return html + '</div>';
+}
+
+// Keine Verfuegbarkeit: ein einziger Offer-Knoten, SoldOut, ohne Preis.
+function microSoldOut(innerHtml) {
+  return microHotelOpen() +
+    '<div itemprop="makesOffer" itemscope itemtype="https://schema.org/Offer https://schema.org/LodgingReservation">' +
+    microMeta('availability', 'https://schema.org/SoldOut') + microStay() + '</div>' +
+    innerHtml + '</div>';
+}
 
 var searchBtn = document.getElementById('bookingSearchBtn');
 var bookingSection = document.getElementById('booking');
@@ -689,7 +763,7 @@ function buildGuestsDropdown() {
       '<span class="guests-row-label" data-i18n="booking_bar.adults">Erwachsene</span>' +
       '<div class="guests-stepper">' +
         '<button type="button" class="guests-step" id="adultMinus" aria-label="Weniger">\u2212</button>' +
-        '<span class="guests-count" id="adultCount">2</span>' +
+        '<span class="guests-count" id="adultCount">' + (parseInt(guestInput && guestInput.value) || 2) + '</span>' +
         '<button type="button" class="guests-step" id="adultPlus" aria-label="Mehr">+</button>' +
       '</div>' +
     '</div>' +
@@ -697,7 +771,7 @@ function buildGuestsDropdown() {
       '<span class="guests-row-label" data-i18n="booking_bar.children">Kinder</span>' +
       '<div class="guests-stepper">' +
         '<button type="button" class="guests-step" id="childMinus" aria-label="Weniger">\u2212</button>' +
-        '<span class="guests-count" id="childCount">0</span>' +
+        '<span class="guests-count" id="childCount">' + (parseInt(childInput && childInput.value) || 0) + '</span>' +
         '<button type="button" class="guests-step" id="childPlus" aria-label="Mehr">+</button>' +
       '</div>' +
     '</div>';
@@ -742,10 +816,9 @@ function buildGuestsDropdown() {
   });
 }
 
-// HCSI (Chalet Swiss): höchste Belegung = 4 (Family Room 4 Bed, 1-4).
 // Immer mind. 1 Erwachsener; Kinder = Max - Erwachsene; Total <= Max.
 function updateGuestCount(type, dir) {
-  var MAX = 4;
+  var MAX = MAX_GUESTS;
   var adults = parseInt(guestInput.value) || 1;
   var children = parseInt(childInput.value) || 0;
   if (type === 'adults') {
@@ -907,6 +980,7 @@ if (searchBtn) {
       check_in: checkinVal,
       check_out: checkoutVal,
       guests: guestsVal,
+      source: deepLink ? deepLink.source : null,
     });
     fetchOffers();
   });
@@ -965,9 +1039,10 @@ function fetchOffers() {
     gtmPush('view_offers', {
       location: 'Hotel Chalet Swiss',
       offer_count: currentOffers.length,
+      source: deepLink ? deepLink.source : null,
     });
     if (currentOffers.length === 0) {
-      offersGrid.innerHTML = '<div class="no-offers"><p>' + (window.t ? window.t('booking.no_offers') : 'Keine Verfügbarkeit für die gewählten Daten. Bitte versuchen Sie andere Daten.') + '</p></div>';
+      offersGrid.innerHTML = microSoldOut('<div class="no-offers"><p>' + (window.t ? window.t('booking.no_offers') : 'Keine Verfügbarkeit für die gewählten Daten. Bitte versuchen Sie andere Daten.') + '</p></div>');
       return;
     }
     renderOffers(data);
@@ -1011,7 +1086,7 @@ function fetchOffers() {
 }
 
 function renderOffers(data) {
-  var html = '';
+  var html = microHotelOpen();
   var nights = data.nights || 1;
 
   var nightLabel = nights === 1 ? (window.t ? window.t('booking.night') : 'Nacht') : (window.t ? window.t('booking.nights') : 'Nächte');
@@ -1048,7 +1123,7 @@ function renderOffers(data) {
     html += '</div>';
   }
 
-  offersGrid.innerHTML = html;
+  offersGrid.innerHTML = html + '</div>';
   offersGrid.querySelectorAll('.offer-card').forEach(function (card) {
     card.addEventListener('click', function () {
       var idx = parseInt(this.getAttribute('data-index'));
@@ -1062,6 +1137,7 @@ function renderOffers(data) {
       }
     });
   });
+  applyDeepLinkAfterRender();
 }
 
 // Storno-Bedingung aus Apaleo cancellationFee + Kategorie in lesbaren Text uebersetzen.
@@ -1104,7 +1180,9 @@ function renderOfferCard(offer, categoryClass, index, isBestPrice) {
   var perNightAmount = perNight.amount ? (Math.round(perNight.amount * 100) / 100).toFixed(2) : '\u2014';
 
   var unitName = offer._displayUnitGroupName || offer.unitGroupName || '';
-  var html = '<div class="offer-card' + (isBestPrice ? ' best-price' : '') + '" data-index="' + index + '" tabindex="0" role="button" aria-label="' + escapeHtml(unitName) + '">';
+  var html = '<div class="offer-card' + (isBestPrice ? ' best-price' : '') + '" data-index="' + index + '" tabindex="0" role="button" aria-label="' + escapeHtml(unitName) + '"' +
+    ' itemprop="makesOffer" itemscope itemtype="https://schema.org/Offer https://schema.org/LodgingReservation">';
+  html += microMeta('availability', 'https://schema.org/InStock') + microStay() + microPriceSpec(offer);
   html += '<div class="offer-card-top">';
   html += '<div class="offer-unit">' + escapeHtml(unitName || (window.t ? window.t('booking.room') : 'Zimmer')) + '</div>';
   html += '<span class="offer-category ' + categoryClass + '">' + (categoryClass === 'refundable' ? (window.t ? window.t('booking.flexible') : 'Flexibel') : (window.t ? window.t('booking.best_price_tag') : 'Bester Preis')) + '</span>';
@@ -1122,7 +1200,7 @@ function renderOfferCard(offer, categoryClass, index, isBestPrice) {
   html += '<div class="offer-total">CHF ' + totalAmount + ' ' + (window.t ? window.t('booking.total') : 'total') + '</div>';
   var cardCityTax = getOfferCityTax(offer);
   if (cardCityTax > 0 && total.amount) {
-    var cardBrutto = roundCHF(total.amount + cardCityTax);
+    var cardBrutto = getOfferGross(offer);
     html += '<div class="offer-citytax" style="font-size:.74rem;color:var(--color-text-muted);margin-top:.2rem;">+ CHF ' + cardCityTax.toFixed(2) + ' ' + tFallback('booking.citytax', 'Kurtaxe') + '</div>';
     html += '<div class="offer-brutto" style="font-size:.85rem;font-weight:700;color:var(--color-primary);margin-top:.1rem;">CHF ' + cardBrutto.toFixed(2) + ' ' + tFallback('booking.summary_total', 'Gesamt') + '</div>';
   }
@@ -1449,6 +1527,12 @@ if (confirmBtn) {
       comment: commentParts.join(' | ').replace(/\| $/,'').trim(),
     };
 
+    // Buchungsquelle und Kampagnenkennung aus dem Deep Link (K3, Frontend).
+    // Beides sind Kampagnenbezeichner ohne Personenbezug und gehen deshalb
+    // unabhaengig vom Consent mit; ohne Deep Link fehlen beide Felder ganz.
+    if (deepLink && deepLink.source) payload.bookingSource = deepLink.source;
+    if (deepLink && deepLink.campaign) payload.campaign = deepLink.campaign;
+
     // Klick-IDs mitschicken, damit der Server die Buchung der Anzeige
 
     // zuordnen kann. Ohne Einwilligung liefert tracking() null und das
@@ -1484,6 +1568,7 @@ if (confirmBtn) {
           total_price: finalTotal,
           currency: selectedOffer.totalGrossAmount ? selectedOffer.totalGrossAmount.currency : 'CHF',
           promo_code: appliedPromo ? appliedPromo.code : '',
+          source: deepLink ? deepLink.source : null,
         });
 
         guestForm.querySelector('.form-grid').style.display = 'none';
@@ -1910,5 +1995,97 @@ function showPaymentRetry(confirmationId, email, bookingData) {
     });
   }
 }
+
+// ===== DEEP LINK (K1b) =====
+// Ohne js/deeplink.js passiert hier nichts: window.amDeepLink fehlt, das
+// Ereignis kommt nie, der Code ist inert. Den Script-Tag setzt erst die
+// Verdrahtung, bis dahin verhaelt sich die Seite exakt wie bisher.
+var deepLink = null;
+var deepLinkPreselectDone = false;
+var deepLinkMismatchDone = false;
+
+function deepLinkConfig() {
+  var props = {};
+  props[PROPERTY_ID] = MAX_GUESTS;
+  return { today: new Date(), properties: props, langs: ['de', 'en'], defaultProperty: PROPERTY_ID };
+}
+
+function isoToDate(iso) {
+  var p = (iso || '').split('-');
+  return new Date(parseInt(p[0], 10), parseInt(p[1], 10) - 1, parseInt(p[2], 10));
+}
+
+// Vergleich von room und rate: case-insensitiv, mit oder ohne Property-Praefix.
+function stripPropertyPrefix(v) {
+  var s = (v === null || v === undefined) ? '' : v.toString().trim().toUpperCase();
+  var prefix = PROPERTY_ID + '-';
+  return s.indexOf(prefix) === 0 ? s.slice(prefix.length) : s;
+}
+function codeMatches(want, value) {
+  return !!value && stripPropertyPrefix(want) === stripPropertyPrefix(value);
+}
+
+function findPreselectIndex(pre) {
+  for (var i = 0; i < currentOffers.length; i++) {
+    var o = currentOffers[i];
+    if (pre.room && !codeMatches(pre.room, o.unitGroupId)) continue;
+    if (pre.rate && !codeMatches(pre.rate, o.ratePlanCode) && !codeMatches(pre.rate, o.ratePlanId)) continue;
+    return i;
+  }
+  return -1;
+}
+
+// Abweichung zwischen dem bei Google angezeigten Gesamtpreis und dem Brutto des
+// vorausgewaehlten (sonst guenstigsten) Angebots. Nur eine Messung, keine
+// Korrektur: der Preis der IBE bleibt, was er ist.
+function reportPriceMismatch() {
+  var offer = selectedOffer;
+  if (!offer) {
+    for (var i = 0; i < currentOffers.length; i++) {
+      if (!offer || getOfferGross(currentOffers[i]) < getOfferGross(offer)) offer = currentOffers[i];
+    }
+  }
+  var shown = parseFloat(deepLink.google.gtotal);
+  if (!offer || isNaN(shown)) return;
+  var delta = getOfferGross(offer) - shown;
+  if (Math.abs(delta) <= 0.05) return;
+  gtmPush('deeplink_price_mismatch', { step: 'deeplink', delta: roundCHF(Math.round(delta / 0.05) * 0.05) });
+}
+
+function applyDeepLinkAfterRender() {
+  if (!deepLink) return;
+  if (deepLink.preselect && !deepLinkPreselectDone) {
+    deepLinkPreselectDone = true;
+    var idx = findPreselectIndex(deepLink.preselect);
+    if (idx !== -1) selectOffer(idx);
+  }
+  if (deepLink.google && deepLink.google.gtotal && !deepLinkMismatchDone) {
+    deepLinkMismatchDone = true;
+    reportPriceMismatch();
+  }
+}
+
+function applyDeepLink() {
+  try {
+    deepLink = window.amDeepLink.parse(window.location.search, deepLinkConfig());
+  } catch (e) { deepLink = null; return; }
+  // Ungueltige Daten: stille Rueckkehr zur normalen Startseite. Keine
+  // Autosuche, kein Dialog, kein Fehler in der Konsole.
+  if (!deepLink.search) return;
+  var s = deepLink.search;
+  cal.checkin = isoToDate(s.arrival);
+  cal.checkout = isoToDate(s.departure);
+  cal.selecting = null;
+  syncInputs();
+  if (guestInput) guestInput.value = s.adults;
+  if (childInput) childInput.value = s.children;
+  updateGuestsLabel();
+  // Die Sprache setzt i18n.js ueber den bestehenden ?lang=-Pfad.
+  if (searchBtn) searchBtn.click();
+  gtmPush('deeplink_applied', { step: 'deeplink', source: deepLink.source });
+}
+
+if (window.amDeepLink) applyDeepLink();
+else document.addEventListener('am:deeplink-ready', applyDeepLink, { once: true });
 
 })();
